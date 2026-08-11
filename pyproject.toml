@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "movo"
+version = "1.0.0"
+description = "JSON から動画を作る CLI（Python 版）"
+requires-python = ">=3.11"
+license = "MIT"
+# 実行に要るのはこの 2 つだけです。どちらも BSD で、EXE に同梱して再配布できます。
+# PNG/JPEG/WAV のコーデック、TrueType のパーサ、式エンジン、物理演算、BPM 検出は
+# JS 版と同じく自前実装なので、依存を増やしていません。
+dependencies = ["numpy>=1.26", "numba>=0.59"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pyinstaller>=6"]
+
+[project.scripts]
+movo = "movo.cli.main:main"
+
+[tool.setuptools.packages.find]
+include = ["movo*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

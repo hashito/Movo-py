@@ -1,0 +1,28 @@
+{
+  "animation": {
+    "name": "spin",
+    "title": "回り続ける",
+    "description": "一定速度で回転。速度はマイナスで逆回り。",
+    "category": "loop",
+    "tags": [
+      "ループ",
+      "rotation"
+    ]
+  },
+  "inputs": {
+    "speed": {
+      "type": "number",
+      "default": 60,
+      "label": "度/秒"
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.rotation",
+        "relative": true,
+        "expression": "time * ${speed}"
+      }
+    ]
+  }
+}

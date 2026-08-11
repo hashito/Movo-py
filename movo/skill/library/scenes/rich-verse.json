@@ -1,0 +1,557 @@
+{
+  "skill": {
+    "name": "rich-verse",
+    "kind": "scene",
+    "title": "A メロ（読ませるゾーン・2 小節カット・ゆっくり横移動）",
+    "description": "歌詞を 2 小節ごとにフレーズ単位で固定位置に置き、絵だけを等速でゆっくり流す。エフェクトは絞る。variant で見え方を変えられるので、同じ A メロを 2 回使える。既定は 8 小節。",
+    "category": "lyric",
+    "tags": [
+      "MV",
+      "Aメロ",
+      "歌詞",
+      "パララックス",
+      "シーン"
+    ]
+  },
+  "inputs": {
+    "lines": {
+      "type": "textList",
+      "label": "歌詞（フレーズ単位で 1 行ずつ。2 小節に 1 行）",
+      "default": [
+        "歩いてた道の先に",
+        "見上げる大きな影",
+        "「立派な木だ」と思って近づけば",
+        "なんと草だったんだ"
+      ]
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 8,
+      "min": 0.5,
+      "max": 64
+    },
+    "bpm": {
+      "type": "number",
+      "label": "BPM（単体で描くとき用。プロジェクトの BPM があればそちらが勝つ）",
+      "default": 148,
+      "min": 20,
+      "max": 400
+    },
+    "background": {
+      "type": "color",
+      "label": "地の色",
+      "default": "#e7eddf"
+    },
+    "color": {
+      "type": "color",
+      "label": "歌詞の色",
+      "default": "#1d2a1b"
+    },
+    "accent": {
+      "type": "color",
+      "label": "差し色（草木の緑）",
+      "default": "#5aa055"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "label": "歌詞の大きさ",
+      "default": 62,
+      "min": 8
+    },
+    "artAsset": {
+      "type": "asset",
+      "label": "背景の絵（素材名。空なら手続き的な下地で代用）",
+      "default": ""
+    },
+    "figureAsset": {
+      "type": "asset",
+      "label": "人物・シルエットの絵（素材名。空なら置かない）",
+      "default": ""
+    },
+    "variant": {
+      "type": "number",
+      "label": "見え方の切り替え（0: 横移動＋引き / 1: 縦移動＋寄り・上下反転）",
+      "default": 0,
+      "min": 0,
+      "max": 8
+    }
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+  "responsiveTime": {
+    "// 行の出入りの呼吸だけは畳まない。ここが縮むと «読ませる» が成立しない。": "",
+    "in": "1/2beat",
+    "out": "1/2beat"
+  },
+  "scene": {
+    "// A メロは «歌詞を読ませるゾーン»。カットは 2 小節（148 BPM で 3.24 秒）に固定し、": "",
+    "// 絵の側だけを等速で流す。サビで «足す» ためには、ここで «減らす» のが前提。": "",
+    "// variant は «同じ A メロを 2 回使う» ためのもの。奇数で移動軸が縦になり、": "",
+    "// 寄り引きが逆転し、上下の明度配置と歌詞の位置がひっくり返る。": "",
+    "duration": "${bars}bar",
+    "background": "${background}",
+    "transition": {
+      "type": "dissolve",
+      "in": 0.35,
+      "out": 0.35
+    },
+    "layers": [
+      {
+        "// 空（地の色に差し色を薄く重ねただけの面）。": "",
+        "// variant で角度を 180 度回して «上が濃い / 下が濃い» を入れ替える。": "",
+        "// 上が濃いと不安定、下が濃いと安定に見えるので、2 回の A メロで印象が変わる。": "",
+        "id": "${_id}-sky",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width}",
+          "height": "${height}",
+          "fill": {
+            "type": "linear",
+            "angle": "${variant % 2 == 1 ? 270 : 90}",
+            "stops": [
+              {
+                "offset": 0,
+                "color": "${accent}"
+              },
+              {
+                "offset": 1,
+                "color": "${background}"
+              }
+            ]
+          }
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.3
+        }
+      },
+      {
+        "// いちばん奥の質感。奥ほどゆっくり・奥ほど大きく、が遠近の作り方。": "",
+        "// 素材が無くても «何か写っている» ようにするための下地でもある。": "",
+        "id": "${_id}-far",
+        "type": "fractalNoise",
+        "fractalNoise": {
+          "type": "fbm",
+          "octaves": 4,
+          "scale": 0.0032,
+          "contrast": 1.1,
+          "colorA": "${background}",
+          "colorB": "${accent}",
+          "resolution": 256
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "width": "${width * 1.3}",
+          "height": "${height * 1.3}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.45
+        },
+        "animations": [
+          {
+            "// 等速（linear）。イージングを掛けると «カットが変わった» ように見えて": "",
+            "// 視線が次の絵へ流れない。呼吸のように一定であること自体が狙い。": "",
+            "property": "transform.x",
+            "relative": true,
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 0
+              },
+              {
+                "time": "${_duration}",
+                "value": "${variant % 2 == 1 ? 0 : width * 0.031}",
+                "easing": "linear"
+              }
+            ]
+          },
+          {
+            "property": "transform.y",
+            "relative": true,
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 0
+              },
+              {
+                "time": "${_duration}",
+                "value": "${variant % 2 == 1 ? height * 0.031 : 0}",
+                "easing": "linear"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "// 素材が無いときだけ敷く «地面»。空の面と合わせて風景に見せるための 1 枚。": "",
+        "// 絵を渡したらこれは消える（要素を数えられる数に保つ）。": "",
+        "id": "${_id}-ground",
+        "when": "${artAsset ? 0 : 1}",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width * 1.4}",
+          "height": "${height * 0.42}",
+          "fill": "${accent}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY + height * 0.36}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.42
+        },
+        "effects": [
+          {
+            "type": "feather",
+            "size": "${height * 0.05}"
+          }
+        ]
+      },
+      {
+        "// 背景の絵。ケンバーンズは «10 秒で 5〜10%・最大 110%» に収める。": "",
+        "// variant で寄りと引きが逆転する（1 回目は引き、2 回目は寄り）。": "",
+        "// **背景の絵は画面いっぱいに引き伸ばす**（photo-slide と同じ扱い）。": "",
+        "// Movo の image は «片方だけ書けば比率を保つ» ようにはなっていません。": "",
+        "// 書かなかった側は素材の原寸がそのまま入るので、height だけ指定すると": "",
+        "// 960px 幅の素材が 960px のまま描かれて画面を覆います（実際に覆いました）。": "",
+        "// 背景は «穴が開かないこと» を優先して両方書く。多少の伸びは風景なら気付かれません。": "",
+        "id": "${_id}-art",
+        "when": "${artAsset}",
+        "type": "image",
+        "asset": "${artAsset}",
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "width": "${width * 1.12}",
+          "height": "${height * 1.12}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "animations": [
+          {
+            "property": "transform.scale",
+            "keyframes": [
+              {
+                "time": 0,
+                "value": "${variant % 2 == 1 ? 1 : 1.08}"
+              },
+              {
+                "time": "${_duration}",
+                "value": "${variant % 2 == 1 ? 1.08 : 1}",
+                "easing": "linear"
+              }
+            ]
+          },
+          {
+            "property": "transform.x",
+            "relative": true,
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 0
+              },
+              {
+                "time": "${_duration}",
+                "value": "${variant % 2 == 1 ? 0 : width * -0.078}",
+                "easing": "linear"
+              }
+            ]
+          },
+          {
+            "property": "transform.y",
+            "relative": true,
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 0
+              },
+              {
+                "time": "${_duration}",
+                "value": "${variant % 2 == 1 ? height * -0.078 : 0}",
+                "easing": "linear"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "// 人物。奥の板より速く動かすと、それだけで奥行きが出る（パララックス）。": "",
+        "// variant で立つ側が入れ替わる。": "",
+        "// **人物には width / height を書かない。scale で大きさを決める。**": "",
+        "// Movo の image は «片方だけ書けば比率を保つ» ようにはなっておらず、": "",
+        "// 書かなかった側には素材の原寸がそのまま入ります。人物素材の縦横比は": "",
+        "// 1:1（960x960）から 1:3.6（960x3448）までばらつくので、box で指定すると": "",
+        "// 潰れるか、画面半分を覆う黒い塊になります（実際になりました）。": "",
+        "// scale なら比率は必ず保たれます。素材は 960px 幅前後で揃っているので、": "",
+        "// scale * 0.26 で «画面幅の 13% くらい» に落ち着きます。": "",
+        "// 足元を床（height * 0.99）に置き anchorY を 1 にしておくと、縦長でも": "",
+        "// 横長でも «立っている» ように見えます（rich-intro と同じ扱い）。": "",
+        "id": "${_id}-figure",
+        "when": "${figureAsset}",
+        "type": "image",
+        "asset": "${figureAsset}",
+        "transform": {
+          "x": "${variant % 2 == 1 ? width * 0.26 : width * 0.74}",
+          "y": "${height * 0.99}",
+          "scale": "${scale * 0.26}",
+          "anchorX": 0.5,
+          "anchorY": 1,
+          "opacity": 0.92
+        },
+        "animations": [
+          {
+            "property": "transform.x",
+            "relative": true,
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 0
+              },
+              {
+                "time": "${_duration}",
+                "value": "${variant % 2 == 1 ? 0 : width * -0.1}",
+                "easing": "linear"
+              }
+            ]
+          },
+          {
+            "property": "transform.y",
+            "relative": true,
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 0
+              },
+              {
+                "time": "${_duration}",
+                "value": "${variant % 2 == 1 ? height * -0.1 : 0}",
+                "easing": "linear"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "// 前ボケの板 1 枚。いちばん速く流す。": "",
+        "// «最小の手間で最大の奥行き» がこれ。ぼけているので絵の内容は問われない。": "",
+        "// 画面いっぱいの «帯» にすると、ぼかしても上辺がまっすぐな線として見えて": "",
+        "// 地平線に化けます。画面の隅から半分はみ出した楕円にすると «手前に何かある»": "",
+        "// としか読めなくなるので、こちらにしました。": "",
+        "id": "${_id}-fore",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": "${width * 0.7}",
+          "height": "${height * 0.6}",
+          "fill": "${accent}"
+        },
+        "transform": {
+          "x": "${variant % 2 == 1 ? width * 0.98 : width * 0.02}",
+          "y": "${height * 1.14}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "rotation": -8,
+          "opacity": 0.28
+        },
+        "effects": [
+          {
+            "// ぼかしは板の大きさに対して十分に大きく。小さいと «ぼけた図形» のまま": "",
+            "// 輪郭が読めてしまい、前ボケではなく «変な塗り» に見える。": "",
+            "type": "blur",
+            "radius": "${max(12, height * 0.13)}"
+          }
+        ],
+        "animations": [
+          {
+            "property": "transform.x",
+            "relative": true,
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 0
+              },
+              {
+                "time": "${_duration}",
+                "value": "${variant % 2 == 1 ? 0 : width * -0.135}",
+                "easing": "linear"
+              }
+            ]
+          },
+          {
+            "property": "transform.y",
+            "relative": true,
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 0
+              },
+              {
+                "time": "${_duration}",
+                "value": "${variant % 2 == 1 ? height * -0.135 : 0}",
+                "easing": "linear"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "// 歌詞の «座布団»。地の色を歌詞の帯にだけ薄く敷いて、下の絵とのコントラストを作る。": "",
+        "// A メロは «読ませる» ゾーンなので、可読性は演出より優先する。": "",
+        "// 色を background にしてあるのは、呼ぶ側が «color と対になる色» として選んだ色だから。": "",
+        "// 明るい文字なら暗い座布団、暗い文字なら明るい座布団に自動で転ぶ。": "",
+        "// feather を強めに掛けて «帯» ではなく «そこだけ地の色が濃い» ように見せる。": "",
+        "id": "${_id}-lyric-scrim",
+        "when": "${lines.length}",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width * 1.1}",
+          "height": "${size * 4.4}",
+          "fill": "${background}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${variant % 2 == 1 ? centerY - height * 0.28 : centerY + height * 0.28}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.7
+        },
+        "effects": [
+          {
+            "type": "feather",
+            "size": "${size * 1.3}"
+          }
+        ]
+      },
+      {
+        "// 歌詞。2 小節（= 60 / bpm * 4 * 2 秒）に 1 行、位置は固定、動かさない。": "",
+        "// 動いているのは絵だけ。文字が動くと読めなくなるし、動く絵の上で文字も動くと": "",
+        "// «何を見ればいいか» が消える。出入りは不透明度だけ。": "",
+        "// 時刻つきの行（.lrc 由来）なら its 時刻を使い、無ければ 2 小節で等分する。": "",
+        "// 行数 × 2 小節が bars を超えると、あふれた行は出ない（呼ぶ側で合わせる）。": "",
+        "repeat": {
+          "over": "${lines}",
+          "as": "line",
+          "indexAs": "i"
+        },
+        "id": "${_id}-line-${i}",
+        "type": "text",
+        "text": "${lyricText(line)}",
+        "start": "${lyricAt(line, i * 2 * 60 / bpm * 4)}",
+        "end": "${lyricAt(line, i * 2 * 60 / bpm * 4) + lyricFor(line, 2 * 60 / bpm * 4)}",
+        "style": {
+          "size": "${size}",
+          "color": "${color}",
+          "align": "center",
+          "lineHeight": 1.35,
+          "letterSpacing": "${size * 0.04}",
+          "kinsoku": "strict",
+          "fit": {
+            "mode": "shrink",
+            "maxWidth": "78%",
+            "maxLines": 2,
+            "minSize": 0.7
+          },
+          "// 縁取りは文字サイズの 5〜10%。太すぎると字が潰れる。": "",
+          "stroke": {
+            "color": "${background}",
+            "width": "${size * 0.07}"
+          },
+          "// 影は 40〜60% の不透明度。座布団・縁取りと合わせて三重に効かせる。": "",
+          "shadow": {
+            "color": "rgba(0,0,0,0.5)",
+            "blur": "${size * 0.24}",
+            "offsetX": 0,
+            "offsetY": "${size * 0.06}"
+          }
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${variant % 2 == 1 ? centerY - height * 0.28 : centerY + height * 0.28}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "use": [
+          {
+            "animation": "fade-in",
+            "with": {
+              "delay": "${lyricAt(line, i * 2 * 60 / bpm * 4)}",
+              "duration": "${min(0.34, lyricFor(line, 2 * 60 / bpm * 4) * 0.2)}"
+            }
+          },
+          {
+            "animation": "fade-out",
+            "with": {
+              "at": "${lyricAt(line, i * 2 * 60 / bpm * 4) + lyricFor(line, 2 * 60 / bpm * 4) - min(0.42, lyricFor(line, 2 * 60 / bpm * 4) * 0.26)}",
+              "duration": "${min(0.34, lyricFor(line, 2 * 60 / bpm * 4) * 0.2)}"
+            }
+          }
+        ]
+      },
+      {
+        "// 全画面の加工はここ 1 枚にまとめる（frameBuffer は 1 フレームぶんのコピーなので、": "",
+        "// レイヤーごとに掛けると同じ絵を何度も舐めることになる）。4 つが上限の目安。": "",
+        "// どれも «見えないけど効いている» 強さ。主張したら負け。": "",
+        "id": "${_id}-grade",
+        "type": "frameBuffer",
+        "frameBuffer": {
+          "source": "below",
+          "clear": true
+        },
+        "transform": {
+          "x": 0,
+          "y": 0,
+          "anchorX": 0,
+          "anchorY": 0
+        },
+        "effects": [
+          {
+            "// 画面の色数を 3 色に寄せるための地ならし。トンマナを揃えるだけ。": "",
+            "type": "gradientOverlay",
+            "angle": "${variant % 2 == 1 ? 315 : 135}",
+            "blend": "overlay",
+            "opacity": 0.18,
+            "stops": [
+              {
+                "offset": 0,
+                "color": "${accent}"
+              },
+              {
+                "offset": 1,
+                "color": "${background}"
+              }
+            ]
+          },
+          {
+            "// 値は «増減量»。0 が変化なし（倍率ではない）。": "",
+            "type": "colorAdjust",
+            "saturation": 0.06,
+            "contrast": 0.05
+          },
+          {
+            "type": "vignette",
+            "amount": 0.26,
+            "radius": 0.74,
+            "softness": 0.55
+          },
+          {
+            "// グレインは 5〜20% の合成量。越えると低ビットレートでノイズに化ける。": "",
+            "type": "noise",
+            "amount": 0.07,
+            "monochrome": true
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "skill": {
+    "name": "mv-intro",
+    "kind": "scene",
+    "title": "イントロ（タイトル提示）",
+    "description": "曲名だけを置いて、1 行の線が伸びる立ち上がり。既定は 4 小節。",
+    "category": "title",
+    "tags": [
+      "MV",
+      "イントロ",
+      "シーン"
+    ]
+  },
+  "inputs": {
+    "title": {
+      "type": "text",
+      "label": "曲名",
+      "default": "無題"
+    },
+    "subtitle": {
+      "type": "text",
+      "label": "副題・作者名",
+      "default": ""
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 4,
+      "min": 0.25,
+      "max": 64
+    },
+    "background": {
+      "type": "color",
+      "default": "#0a0a12"
+    },
+    "color": {
+      "type": "color",
+      "label": "文字色",
+      "default": "#f2efe8"
+    },
+    "accent": {
+      "type": "color",
+      "label": "線の色",
+      "default": "#ffd166"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "label": "曲名の大きさ",
+      "default": 118,
+      "min": 8
+    }
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+  "responsiveTime": {
+    "// 曲名がせり上がる 0.9 秒が «立ち上がり» そのもの。ここを尺で伸び縮みさせると別の曲に見える。": "",
+    "// 終わりは transition のフェードに任せているので out は取らない（取ると頭のぶんの余裕が減る）。": "",
+    "in": 1
+  },
+  "scene": {
+    "duration": "${bars}bar",
+    "background": "${background}",
+    "transition": {
+      "type": "fade",
+      "in": 0.5,
+      "out": 0.4
+    },
+    "layers": [
+      {
+        "id": "${_id}-title",
+        "type": "text",
+        "text": "${title}",
+        "style": {
+          "size": "${size}",
+          "color": "${color}",
+          "align": "center",
+          "weight": "bold",
+          "letterSpacing": "${size * 0.06}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY - size * 0.25}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "use": [
+          {
+            "animation": "rise-in",
+            "with": {
+              "distance": 40,
+              "duration": 0.9
+            }
+          },
+          {
+            "animation": "breathe",
+            "with": {
+              "frequency": 0.2,
+              "scaleAmount": 0.006,
+              "opacityAmount": 0
+            }
+          }
+        ]
+      },
+      {
+        "id": "${_id}-rule",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${size * 6}",
+          "height": "${max(2, size * 0.02)}",
+          "fill": "${accent}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY + size * 0.35}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "scaleX": 0
+        },
+        "animations": [
+          {
+            "property": "transform.scaleX",
+            "keyframes": [
+              {
+                "time": 0.5,
+                "value": 0
+              },
+              {
+                "time": 1.4,
+                "value": 1,
+                "easing": "easeOutCubic"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "when": "${subtitle}",
+        "id": "${_id}-subtitle",
+        "type": "text",
+        "text": "${subtitle}",
+        "style": {
+          "size": "${size * 0.24}",
+          "color": "${color}",
+          "align": "center",
+          "letterSpacing": "${size * 0.05}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY + size * 0.75}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "use": [
+          {
+            "animation": "fade-in",
+            "with": {
+              "delay": 1.1,
+              "duration": 0.8
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

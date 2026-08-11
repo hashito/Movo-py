@@ -1,0 +1,130 @@
+{
+  "skill": {
+    "name": "mv-verse",
+    "kind": "scene",
+    "title": "A メロ（歌詞を順に出す）",
+    "description": "渡した歌詞を尺で等分し、1 行ずつ静かに出しては消す。既定は 8 小節。",
+    "category": "lyric",
+    "tags": [
+      "MV",
+      "Aメロ",
+      "歌詞",
+      "シーン"
+    ]
+  },
+  "inputs": {
+    "lines": {
+      "type": "textList",
+      "label": "歌詞（1 行ずつ）",
+      "default": [
+        "同じ顔が並んでる",
+        "どれが最初か忘れた"
+      ]
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 8,
+      "min": 0.25,
+      "max": 64
+    },
+    "background": {
+      "type": "color",
+      "default": "#0a0a12"
+    },
+    "color": {
+      "type": "color",
+      "label": "歌詞の色",
+      "default": "#f2efe8"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "label": "歌詞の大きさ",
+      "default": 56,
+      "min": 8
+    },
+    "y": {
+      "type": "number",
+      "unit": "px",
+      "label": "中心からの縦位置",
+      "default": 220
+    }
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+  "responsiveTime": {
+    "// 行の出入りは «半拍で出て半拍で引く»。行数や BPM を変えても呼吸を同じにしたいので拍で書く。": "",
+    "in": "1/2beat",
+    "out": "1/2beat"
+  },
+  "scene": {
+    "duration": "${bars}bar",
+    "background": "${background}",
+    "transition": {
+      "type": "dissolve",
+      "in": 0.4,
+      "out": 0.4
+    },
+    "layers": [
+      {
+        "repeat": {
+          "count": "${lines.length}",
+          "as": "i"
+        },
+        "id": "${_id}-line-${i}",
+        "type": "text",
+        "text": "${lines[i]}",
+        "style": {
+          "size": "${size}",
+          "color": "${color}",
+          "align": "center",
+          "letterSpacing": "${size * 0.05}",
+          "// 行の長さは曲ごとに違うので «この大きさなら入る» と決め打ちできません。": "",
+          "fit": {
+            "mode": "shrink",
+            "maxWidth": "${width * 0.9}",
+            "minSize": 0.3
+          },
+          "stroke": {
+            "color": "rgba(0,0,0,0.6)",
+            "width": "${size * 0.07}"
+          }
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY + y}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "start": "${_duration / iCount * i}",
+        "end": "${_duration / iCount * (i + 1)}",
+        "use": [
+          {
+            "animation": "fade-in",
+            "with": {
+              "delay": "${_duration / iCount * i}",
+              "duration": "${min(0.35, _duration / iCount * 0.25)}"
+            }
+          },
+          {
+            "animation": "fade-out",
+            "with": {
+              "at": "${_duration / iCount * (i + 1) - min(0.4, _duration / iCount * 0.3)}",
+              "duration": "${min(0.35, _duration / iCount * 0.25)}"
+            }
+          },
+          {
+            "animation": "float",
+            "with": {
+              "amplitude": 4,
+              "frequency": 0.3
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "animation": {
+    "name": "beat-bounce",
+    "title": "拍で跳ねる",
+    "description": "BPM の拍ごとに拡大して戻る。project.bpm を使う。",
+    "category": "accent",
+    "tags": [
+      "BPM",
+      "scale"
+    ]
+  },
+  "inputs": {
+    "amount": {
+      "type": "number",
+      "default": 0.08
+    },
+    "division": {
+      "type": "number",
+      "default": 1,
+      "min": 0.03125,
+      "label": "拍の分割"
+    },
+    "decay": {
+      "type": "number",
+      "default": 9,
+      "min": 0
+    },
+    "lift": {
+      "type": "number",
+      "default": 0,
+      "label": "上に跳ねる量"
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.scaleX",
+        "relative": true,
+        "modulator": {
+          "type": "beat",
+          "division": "${division}",
+          "amplitude": "${amount}",
+          "decay": "${decay}"
+        }
+      },
+      {
+        "property": "transform.scaleY",
+        "relative": true,
+        "modulator": {
+          "type": "beat",
+          "division": "${division}",
+          "amplitude": "${amount}",
+          "decay": "${decay}"
+        }
+      },
+      {
+        "when": "${lift != 0}",
+        "property": "transform.y",
+        "relative": true,
+        "modulator": {
+          "type": "beat",
+          "division": "${division}",
+          "amplitude": "${-lift}",
+          "decay": "${decay}"
+        }
+      }
+    ]
+  }
+}

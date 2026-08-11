@@ -1,0 +1,129 @@
+{
+  "skill": {
+    "name": "glitch-overlay",
+    "title": "グリッチのオーバーレイ",
+    "description": "画面全体にグリッチと走査線を重ねる。切り替えの直前に置くと効く。",
+    "category": "transition",
+    "tags": [
+      "グリッチ",
+      "トランジション"
+    ],
+    "learnedFrom": [
+      "https://seguimiii.com/aviutl-tech/glitch"
+    ]
+  },
+  "inputs": {
+    "amount": {
+      "type": "number",
+      "default": 0.6,
+      "min": 0,
+      "max": 1
+    },
+    "color": {
+      "type": "color",
+      "default": "#4cc9f0"
+    },
+    "duration": {
+      "type": "number",
+      "default": 0.8,
+      "min": 0.05
+    },
+    "interval": {
+      "type": "number",
+      "default": 2,
+      "min": 1
+    },
+    "shake": {
+      "type": "number",
+      "unit": "px",
+      "default": 20,
+      "label": "揺れ"
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#000000"
+  },
+  "layers": [
+    {
+      "id": "${_id}-bars",
+      "type": "shape",
+      "shape": {
+        "type": "rectangle",
+        "width": "${width}",
+        "height": "${height * 0.06}",
+        "fill": "${color}"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "anchorX": 0.5,
+        "anchorY": 0.5,
+        "opacity": 0.55
+      },
+      "repeater": {
+        "count": 9,
+        "offset": {
+          "y": "${height * 0.11}",
+          "opacity": 0.92
+        }
+      },
+      "animations": [
+        {
+          "property": "transform.y",
+          "modulator": {
+            "type": "random-step",
+            "frequency": 12,
+            "amplitude": "${height * 0.5}",
+            "offset": "${centerY}"
+          }
+        }
+      ],
+      "use": [
+        {
+          "animation": "glitch-flicker",
+          "with": {
+            "amount": "${amount}",
+            "interval": "${interval}"
+          }
+        },
+        {
+          "animation": "impact-shake",
+          "with": {
+            "at": 0,
+            "amplitude": "${shake}",
+            "decay": 4
+          }
+        }
+      ],
+      "effects": [
+        {
+          "type": "chromaticAberration",
+          "amount": 6
+        }
+      ]
+    },
+    {
+      "id": "${_id}-noise",
+      "type": "shader",
+      "shader": {
+        "expression": "noise(u * 40 + time * 30, v * 40) * 0.5 + 0.5",
+        "colorA": "#000000",
+        "colorB": "#ffffff",
+        "resolution": 64
+      },
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": "${width}",
+        "height": "${height}",
+        "anchorX": 0,
+        "anchorY": 0,
+        "opacity": "${amount * 0.25}"
+      },
+      "blend": "screen"
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "skill": {
+    "name": "audio-bars",
+    "title": "音声ビジュアライザ",
+    "description": "波形バーと拍で反応する円。音源を入れると音に同期する。",
+    "category": "audio",
+    "tags": [
+      "音声",
+      "波形"
+    ],
+    "learnedFrom": [
+      "https://nanika.design/blog/1651/"
+    ]
+  },
+  "inputs": {
+    "audio": {
+      "type": "asset",
+      "default": "",
+      "label": "音源ファイル（wav。空なら BPM で動かす）"
+    },
+    "bpm": {
+      "type": "number",
+      "default": 120,
+      "min": 1,
+      "label": "音源が無いときの拍"
+    },
+    "barColor": {
+      "type": "color",
+      "default": "#4cc9f0"
+    },
+    "barEndColor": {
+      "type": "color",
+      "default": "#f72585"
+    },
+    "bars": {
+      "type": "number",
+      "default": 56,
+      "min": 2,
+      "max": 512
+    },
+    "style": {
+      "type": "choice",
+      "options": [
+        "bars",
+        "mirror",
+        "wave"
+      ],
+      "default": "bars"
+    },
+    "ring": {
+      "type": "boolean",
+      "default": true,
+      "label": "中央に円を出す"
+    },
+    "duration": {
+      "type": "number",
+      "default": 8,
+      "min": 0.2
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#06070d"
+  },
+  "layers": [
+    {
+      "when": "${ring}",
+      "id": "${_id}-ring",
+      "type": "shape",
+      "shape": {
+        "type": "circle",
+        "radius": "${height * 0.18}",
+        "stroke": {
+          "color": "${barEndColor}",
+          "width": "${max(1, 8 * scale)}"
+        }
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY * 0.85}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "animations": [
+        {
+          "property": "transform.scaleX",
+          "modulator": {
+            "type": "audio-reactive",
+            "band": 0,
+            "amplitude": 0.4,
+            "offset": 1
+          }
+        },
+        {
+          "property": "transform.scaleY",
+          "modulator": {
+            "type": "audio-reactive",
+            "band": 0,
+            "amplitude": 0.4,
+            "offset": 1
+          }
+        },
+        {
+          "property": "transform.opacity",
+          "expression": "0.35 + audio.bands[0] * 0.65 + (audio.level > 0 ? 0 : 0.25)"
+        }
+      ],
+      "use": [
+        {
+          "animation": "beat-bounce",
+          "with": {
+            "bpm": "${bpm}",
+            "amount": 0.18,
+            "decay": 7
+          }
+        }
+      ]
+    },
+    {
+      "id": "${_id}-bars",
+      "type": "waveform",
+      "waveform": {
+        "style": "${style}",
+        "bars": "${bars}",
+        "color": "${barColor}",
+        "endColor": "${barEndColor}",
+        "gap": 0.28,
+        "gain": 1.1,
+        "radius": "${max(1, 3 * scale)}",
+        "window": 0.1
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${height * 0.92}",
+        "width": "${width * 0.9}",
+        "height": "${height * 0.22}",
+        "anchorX": 0.5,
+        "anchorY": 1
+      }
+    }
+  ],
+  "assets": {
+    "${_id}-track": {
+      "when": "${audio}",
+      "type": "audio",
+      "path": "${audio}"
+    }
+  },
+  "audio": [
+    {
+      "when": "${audio}",
+      "asset": "${_id}-track",
+      "start": 0,
+      "volume": 1
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "skill": {
+    "name": "lyric-vertical",
+    "title": "縦書きの歌詞",
+    "description": "右から左へ列が並ぶ縦書き。カラオケ塗りも効く。",
+    "category": "lyric",
+    "tags": [
+      "歌詞",
+      "縦書き"
+    ],
+    "learnedFrom": [
+      "https://note.com/fontworks_note/n/nb69a95c42408"
+    ]
+  },
+  "inputs": {
+    "text": {
+      "type": "text",
+      "default": "静かに\n息をする",
+      "label": "歌詞（改行で列）",
+      "required": true
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "default": 56,
+      "min": 8
+    },
+    "baseColor": {
+      "type": "color",
+      "default": "#5d6790"
+    },
+    "fillColor": {
+      "type": "color",
+      "default": "#4cc9f0"
+    },
+    "strokeColor": {
+      "type": "color",
+      "default": "#0a0a12"
+    },
+    "x": {
+      "type": "number",
+      "unit": "px",
+      "default": 0,
+      "label": "中心からの横位置"
+    },
+    "startAt": {
+      "type": "number",
+      "default": 0.25
+    },
+    "endAt": {
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "label": "塗り終わり（0 で尺いっぱい）"
+    },
+    "duration": {
+      "type": "number",
+      "default": 4,
+      "min": 0.2
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#0a0a12"
+  },
+  "responsiveTime": {
+    "// lyric-line と同じ理由。行の出方は尺に関係なく同じ速さにする。": "",
+    "in": 0.4
+  },
+  "layers": [
+    {
+      "id": "${_id}-vertical",
+      "type": "text",
+      "text": "${text}",
+      "style": {
+        "direction": "vertical",
+        "size": "${size}",
+        "color": "${baseColor}",
+        "lineHeight": 1.5,
+        "charSpacing": 1.08,
+        "stroke": {
+          "color": "${strokeColor}",
+          "width": "${size * 0.09}"
+        }
+      },
+      "transform": {
+        "x": "${centerX + x}",
+        "y": "${height * 0.16}",
+        "anchorX": 0.5,
+        "anchorY": 0
+      },
+      "karaoke": {
+        "progress": {
+          "keyframes": [
+            {
+              "time": "${startAt}",
+              "value": 0
+            },
+            {
+              "time": "${endAt > 0 ? endAt : max(startAt + 0.3, _duration - 0.45)}",
+              "value": 1
+            }
+          ]
+        },
+        "color": "${fillColor}",
+        "softness": 0.02
+      },
+      "use": [
+        {
+          "animation": "fade-in",
+          "with": {
+            "duration": 0.5
+          }
+        },
+        {
+          "animation": "float",
+          "with": {
+            "amplitude": 4,
+            "frequency": 0.3
+          }
+        }
+      ]
+    }
+  ]
+}

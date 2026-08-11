@@ -1,0 +1,211 @@
+{
+  "skill": {
+    "name": "photo-slide",
+    "title": "写真のスライド",
+    "description": "ケン・バーンズとフィルム調で写真を見せる。素材名を並べるだけ。",
+    "category": "background",
+    "tags": [
+      "写真",
+      "ケンバーンズ"
+    ],
+    "learnedFrom": [
+      "https://www.kotsuxkotsu.work/ae-technique-illustmv-lyricvideo/"
+    ]
+  },
+  "inputs": {
+    "assets": {
+      "type": "list",
+      "default": [],
+      "label": "素材名（カンマ区切り）"
+    },
+    "each": {
+      "type": "number",
+      "default": 3,
+      "min": 0.3,
+      "label": "1 枚あたりの秒数"
+    },
+    "overlap": {
+      "type": "number",
+      "default": 0.6,
+      "min": 0,
+      "label": "重なり"
+    },
+    "film": {
+      "type": "boolean",
+      "default": true,
+      "label": "フィルム調"
+    },
+    "caption": {
+      "type": "text",
+      "default": ""
+    }
+  },
+  "duration": "${max(each, assets.length * each)}",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#0b0b10"
+  },
+  "layers": [
+    {
+      "when": "${assets.length == 0}",
+      "id": "${_id}-demo",
+      "type": "fractalNoise",
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": "${width}",
+        "height": "${height}",
+        "anchorX": 0,
+        "anchorY": 0
+      },
+      "use": [
+        {
+          "animation": "ken-burns",
+          "with": {
+            "duration": "${_duration}",
+            "toScale": 1.28,
+            "panY": -45
+          }
+        }
+      ],
+      "fractalNoise": {
+        "type": "fbm",
+        "octaves": 5,
+        "scale": 0.0035,
+        "evolution": {
+          "expression": "time * 0.5"
+        },
+        "scrollX": 70,
+        "contrast": 1.3,
+        "colorA": "#1b2a4a",
+        "colorB": "#e0b070",
+        "resolution": 200
+      }
+    },
+    {
+      "repeat": {
+        "count": "${assets.length}",
+        "as": "i"
+      },
+      "id": "${_id}-photo-${iIndex}",
+      "type": "image",
+      "asset": "${assets[iIndex]}",
+      "start": "${iIndex * each}",
+      "end": "${iIndex * each + each + overlap}",
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "width": "${width}",
+        "height": "${height}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "ken-burns",
+          "with": {
+            "duration": "${each + overlap}",
+            "toScale": 1.28,
+            "panX": "${iIndex % 2 == 0 ? -50 : 50}",
+            "panY": -45
+          }
+        },
+        {
+          "animation": "fade-in",
+          "with": {
+            "duration": "${overlap > 0 ? overlap : 0.3}"
+          }
+        },
+        {
+          "animation": "fade-out",
+          "with": {
+            "at": "${each}",
+            "duration": "${overlap > 0 ? overlap : 0.3}"
+          }
+        }
+      ]
+    },
+    {
+      "when": "${caption}",
+      "id": "${_id}-caption",
+      "type": "text",
+      "text": "${caption}",
+      "style": {
+        "size": "${40 * scale}",
+        "color": "#ffffff",
+        "align": "center",
+        "stroke": {
+          "color": "#00000088",
+          "width": "${max(1, 4 * scale)}"
+        }
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${height * 0.86}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "rise-in",
+          "with": {
+            "duration": 0.8,
+            "distance": 24
+          }
+        }
+      ]
+    },
+    {
+      "when": "${film}",
+      "id": "${_id}-grade",
+      "type": "shape",
+      "shape": {
+        "type": "rectangle",
+        "width": "${width}",
+        "height": "${height}",
+        "fill": "rgba(0,0,0,0)"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "film-look",
+          "with": {
+            "grain": 0.05,
+            "warmth": 0.22
+          }
+        }
+      ]
+    },
+    {
+      "when": "${assets.length == 0}",
+      "id": "${_id}-hint",
+      "type": "text",
+      "text": "素材名を assets に渡してください（例: --set assets=a,b,c）",
+      "style": {
+        "size": "${max(10, 28 * scale)}",
+        "color": "#f2e6cf",
+        "align": "center"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${height * 0.9}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "fade-in",
+          "with": {
+            "duration": "${min(0.6, _duration * 0.4)}"
+          }
+        }
+      ]
+    }
+  ]
+}

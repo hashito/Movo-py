@@ -1,0 +1,70 @@
+{
+  "animation": {
+    "name": "blur-in",
+    "title": "ぼけから登場",
+    "description": "ぼけた状態からピントが合う。",
+    "category": "in",
+    "tags": [
+      "登場",
+      "blur"
+    ]
+  },
+  "inputs": {
+    "delay": {
+      "type": "number",
+      "default": 0
+    },
+    "duration": {
+      "type": "number",
+      "default": 0.8,
+      "min": 0.01
+    },
+    "radius": {
+      "type": "number",
+      "unit": "px",
+      "default": 24,
+      "min": 0
+    },
+    "easing": {
+      "type": "text",
+      "default": "easeOutCubic",
+      "label": "イージング"
+    }
+  },
+  "produces": {
+    "effects": [
+      {
+        "id": "blurIn",
+        "type": "blur",
+        "radius": {
+          "keyframes": [
+            {
+              "time": "${delay}",
+              "value": "${radius}"
+            },
+            {
+              "time": "${delay + duration}",
+              "value": 0,
+              "easing": "${easing}"
+            }
+          ]
+        }
+      }
+    ],
+    "animations": [
+      {
+        "property": "transform.opacity",
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": 0
+          },
+          {
+            "time": "${delay + duration * 0.5}",
+            "value": 1
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "glitch-pink",
+  "label": "グリッチ蛍光",
+  "note": "断絶が身上。ずるずる繋がると «ただのピンク画面» になる。明暗差も要る。",
+  "target": {
+    "cutSeconds": [
+      0.5,
+      6
+    ],
+    "cutsPerMinute": [
+      10,
+      90
+    ],
+    "motion": [
+      0.006,
+      0.05
+    ],
+    "stillRatio": [
+      0,
+      0.72
+    ],
+    "colors": [
+      8,
+      64
+    ],
+    "saturation": [
+      0.4,
+      0.85
+    ],
+    "contrast": [
+      0.15,
+      0.45
+    ],
+    "detail": [
+      0.01,
+      0.04
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "animation": {
+    "name": "crt-look",
+    "title": "ブラウン管風",
+    "description": "レンズ歪み・色収差・走査線・周辺減光をまとめて掛ける。",
+    "category": "other",
+    "tags": [
+      "ルック",
+      "エフェクト"
+    ]
+  },
+  "inputs": {
+    "distortion": {
+      "type": "number",
+      "default": 0.3
+    },
+    "aberration": {
+      "type": "number",
+      "unit": "px",
+      "default": 3
+    },
+    "scanlines": {
+      "type": "number",
+      "default": 0.35,
+      "min": 0,
+      "max": 1
+    },
+    "vignette": {
+      "type": "number",
+      "default": 0.55,
+      "min": 0,
+      "max": 1
+    }
+  },
+  "produces": {
+    "effects": [
+      {
+        "type": "lensDistortion",
+        "strength": "${distortion}"
+      },
+      {
+        "type": "chromaticAberration",
+        "amount": "${aberration}"
+      },
+      {
+        "type": "scanlines",
+        "spacing": 3,
+        "amount": "${scanlines}"
+      },
+      {
+        "type": "vignette",
+        "amount": "${vignette}",
+        "radius": 0.55,
+        "softness": 0.5
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "animation": {
+    "name": "drift",
+    "title": "ゆっくり流れる",
+    "description": "一定方向へ等速で流れ続ける。背景素材に。",
+    "category": "loop",
+    "tags": [
+      "ループ",
+      "移動"
+    ]
+  },
+  "inputs": {
+    "speedX": {
+      "type": "number",
+      "unit": "px",
+      "default": 20,
+      "label": "px/秒"
+    },
+    "speedY": {
+      "type": "number",
+      "unit": "px",
+      "default": 0
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.x",
+        "relative": true,
+        "expression": "time * ${speedX}"
+      },
+      {
+        "property": "transform.y",
+        "relative": true,
+        "expression": "time * ${speedY}"
+      }
+    ]
+  }
+}

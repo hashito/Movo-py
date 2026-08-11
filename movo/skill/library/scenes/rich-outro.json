@@ -1,0 +1,498 @@
+{
+  // ------------------------------------------------------------------
+  // rich-outro — 完全静止のアウトロ（既定 3 小節）
+  //
+  // rich-intro と対になるシーンです。守っている約束は 4 つ。
+  //
+  //   1. **完全静止**。動きをゼロにするのがアウトロの正解です。
+  //      移動・拡大・回転のキーフレームは 1 本もありません。動くのは
+  //      «出てくるときの不透明度» だけです。フェードアウトは 4〜8 小節
+  //      掛けるのが普通ですが 3 小節しか無いので、**動きを止めること
+  //      そのもの** を減速表現として使います。
+  //   2. **クレジットは静止**。尺が短いのでロールは使えません（読み切れない）。
+  //   3. **rich-intro と同じ位置・同じ大きさ・同じ組み方で曲名を戻す**。
+  //      座標の式は rich-intro からそのまま持ってきています。
+  //        x = width * 0.09（左寄せ）  y = centerY  縁取り = size * 0.06
+  //      書体を指定していないのも意図的です。プロジェクトで font を
+  //      差し替えたときに、2 つのシーンが一緒に付いてくるようにしています。
+  //   4. **末尾でフェードアウト**。transition.out を 1 小節にしてあるので、
+  //      BPM を変えても «1 小節かけて消える» が保たれます。
+  //
+  // 背景の絵は rich-intro の «寄せ終わったところ» で止めてあります
+  // （scale 1.035 相当を初期値として直接書く）。カメラが止まった、
+  // という読み方になります。
+  //
+  // 素材名はすべて入力値で受けます（artAsset / figureAsset）。
+  // 式の中の (240 / bpm) は 1 小節の秒数です（4/4 拍子）。
+  // ------------------------------------------------------------------
+  "skill": {
+    "name": "rich-outro",
+    "kind": "scene",
+    "title": "アウトロ（完全静止で終わる）",
+    "description": "動きを完全に止め、イントロと同じ位置へ曲名を戻して静止クレジットを添え、1 小節かけて暗転する。既定は 3 小節。",
+    "category": "title",
+    "tags": [
+      "MV",
+      "アウトロ",
+      "シーン",
+      "静止",
+      "クレジット"
+    ]
+  },
+
+  "inputs": {
+    "title": {
+      "type": "text",
+      "label": "曲名",
+      "default": "無題"
+    },
+    "subtitle": {
+      "type": "text",
+      "label": "副題（空で消える）",
+      "default": ""
+    },
+    "credit": {
+      "type": "text",
+      "label": "クレジット（改行で複数行）",
+      "default": "movie : Movo"
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 3,
+      "min": 0.25,
+      "max": 64
+    },
+    // プロジェクトに組み込むと project.bpm のほうが強く、こちらは
+    // «単体で描くときの既定» になります（movo skill render rich-outro）。
+    "bpm": {
+      "type": "number",
+      "label": "BPM（時刻の計算に使う）",
+      "default": 148,
+      "min": 20,
+      "max": 400
+    },
+    "background": {
+      "type": "color",
+      "label": "背景色",
+      "default": "#141a16"
+    },
+    "color": {
+      "type": "color",
+      "label": "文字色",
+      "default": "#f0ece2"
+    },
+    "accent": {
+      "type": "color",
+      "label": "差し色（線・前ボケ・色被り）",
+      "default": "#a8c98a"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "label": "曲名の大きさ",
+      "default": 104,
+      "min": 8
+    },
+    "artAsset": {
+      "type": "asset",
+      "label": "背景画像の素材名（空なら空だけ）",
+      "default": ""
+    },
+    "figureAsset": {
+      "type": "asset",
+      "label": "人物画像の素材名（空なら置かない）",
+      "default": ""
+    }
+  },
+
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+
+  // 曲名がゆっくり戻る 1 拍は畳みません。
+  // out は書きません。**尻に守るべきキーフレームが 1 本も無い**からです
+  // （終わりのフェードアウトは transition の仕事で、キーフレームではない）。
+  // 意味の無い out を書くと、短い尺のときに «保護区間が尺に収まらない» 警告
+  // だけが増えます。
+  "responsiveTime": {
+    "in": "1beat"
+  },
+
+  "scene": {
+    "duration": "${bars}bar",
+    "background": "${background}",
+
+    // in は半小節（前のカットから溶かして受ける）。
+    // out は 1 小節。ここが «末尾のフェードアウト» そのものです。
+    "transition": {
+      "type": "fade",
+      "in": "${240 / bpm * 0.5}",
+      "out": "${240 / bpm}"
+    },
+
+    "layers": [
+      // --------------------------------------------------------------
+      // 1. 空 — rich-intro と同じ下地。**動かしません。**
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-sky",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width * 1.2}",
+          "height": "${height * 1.25}",
+          "fill": {
+            "type": "linear",
+            "angle": 90,
+            "stops": [
+              { "offset": 0, "color": "${accent}" },
+              { "offset": 0.42, "color": "${background}" },
+              { "offset": 1, "color": "${background}" }
+            ]
+          }
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        }
+      },
+
+      // --------------------------------------------------------------
+      // 2. 背景画像 — **寄せ終わった位置で止まっています。**
+      //    rich-intro のケン・バーンズが着いた先（約 1.035 倍）を
+      //    そのまま初期値にしているので、«カメラが止まった» と読めます。
+      //    animations は 1 本も書きません。
+      //    width / height を両方書いているのは rich-intro と同じ理由です
+      //    （背景板は画面を埋めるのが仕事。cover が無いので隙間より伸びを取る）。
+      // --------------------------------------------------------------
+      {
+        "when": "${artAsset}",
+        "id": "${_id}-art",
+        "type": "image",
+        "asset": "${artAsset}",
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "width": "${width * 1.16}",
+          "height": "${height * 1.16}",
+          "scaleX": 1.035,
+          "scaleY": 1.035,
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        }
+      },
+
+      // --------------------------------------------------------------
+      // 3. もや — evolution も scrollX も 0。**流れません。**
+      //    「静止」と言い切るために、手続き生成のレイヤーでも
+      //    時間項をすべて外しています（ここを 0 にし忘れると、
+      //    ほかを全部止めても背景だけがゆらゆら動きます）。
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-haze",
+        "type": "fractalNoise",
+        "blend": "screen",
+        "fractalNoise": {
+          "type": "fbm",
+          "octaves": 3,
+          "scale": 0.0022,
+          "evolution": 0,
+          "scrollX": 0,
+          "contrast": 1.25,
+          "colorA": "rgba(0,0,0,0)",
+          "colorB": "${color}",
+          "resolution": 150
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "width": "${width}",
+          "height": "${height}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.14
+        }
+      },
+
+      // --------------------------------------------------------------
+      // 4. 人物 — 静止。逆光の縁だけ rich-intro と同じ強さで残します。
+      //
+      //    rich-intro と同じ理由で **width / height は書きません**。
+      //    image レイヤーは片方だけ書くともう片方が «素材のピクセル数» の
+      //    まま残るので、縦長の素材（960x3448 など）が潰れます。
+      //    形を保つには scale です。位置も rich-intro と同じにして、
+      //    «同じ場所に同じ人が立ったまま終わる» ようにしています。
+      // --------------------------------------------------------------
+      {
+        "when": "${figureAsset}",
+        "id": "${_id}-figure",
+        "type": "image",
+        "asset": "${figureAsset}",
+        "transform": {
+          "x": "${width * 0.74}",
+          "y": "${height * 0.98}",
+          "scale": "${scale * 0.28}",
+          "anchorX": 0.5,
+          "anchorY": 1
+        },
+        "effects": [
+          {
+            "type": "rimLight",
+            "angle": -38,
+            "width": "${max(4, 13 * scale)}",
+            "color": "${color}",
+            "intensity": 1.1
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 5. 前ボケ — 静止。奥行きだけ置いていきます。
+      //    rich-intro と同じ楕円です（長方形だと、ぼかしても上辺の直線が
+      //    «半透明の板» に見えてしまうため）。傾きだけ rich-intro の
+      //    終わりの値（-1.2 度）に合わせて、動きが止まった先を引き継ぎます。
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-bokeh",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": "${width * 2.2}",
+          "height": "${height * 0.9}",
+          "fill": "${accent}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${height * 1.34}",
+          "rotation": -1.2,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.34
+        },
+        "effects": [
+          { "type": "blur", "radius": "${max(26, 150 * scale)}" }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 6. 曲名 — **rich-intro と同じ場所へ戻ってきます。**
+      //    style と transform は rich-intro のものをそのまま写しています。
+      //    ここを別の位置・別の大きさにすると «帰ってきた» 感が消えます。
+      //    動きは不透明度だけ。滑って出てくると静止が台無しになります。
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-title",
+        "type": "text",
+        "text": "${title}",
+        "style": {
+          "size": "${size}",
+          "color": "${color}",
+          "align": "left",
+          "weight": "bold",
+          "letterSpacing": "${size * 0.04}",
+          "stroke": {
+            "color": "${background}",
+            "width": "${size * 0.06}"
+          },
+          "shadow": {
+            "color": "rgba(0,0,0,0.5)",
+            "blur": "${max(4, size * 0.14)}",
+            "offsetX": 0,
+            "offsetY": "${max(2, size * 0.04)}"
+          },
+          "fit": {
+            "mode": "shrink",
+            "maxWidth": "78%",
+            "minSize": 0.5
+          }
+        },
+        "transform": {
+          "x": "${width * 0.09}",
+          "y": "${centerY}",
+          "anchorX": 0,
+          "anchorY": 0.5,
+          "opacity": 0
+        },
+        "effects": [
+          { "type": "glow", "radius": "${max(3, size * 0.06)}", "intensity": 0.32, "color": "${accent}" },
+          { "type": "glow", "radius": "${max(8, size * 0.2)}", "intensity": 0.2, "color": "${accent}" }
+        ],
+        "animations": [
+          {
+            "property": "transform.opacity",
+            "keyframes": [
+              { "time": "${240 / bpm * 0.1}", "value": 0 },
+              { "time": "${240 / bpm * 0.85}", "value": 1, "easing": "easeOutCubic" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 7. 差し色の線 — イントロでは «引かれる» 線でしたが、
+      //    ここでは最初から引かれた長さで、明るさだけが戻ります。
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-rule",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${size * 4.6}",
+          "height": "${max(2, size * 0.028)}",
+          "fill": "${accent}"
+        },
+        "transform": {
+          "x": "${width * 0.09}",
+          "y": "${centerY + size * 0.68}",
+          "anchorX": 0,
+          "anchorY": 0.5,
+          "opacity": 0
+        },
+        "animations": [
+          {
+            "property": "transform.opacity",
+            "keyframes": [
+              { "time": "${240 / bpm * 0.35}", "value": 0 },
+              { "time": "${240 / bpm * 1}", "value": 1, "easing": "easeOutCubic" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 8. 副題 — 線の下。rich-intro と同じ位置です。
+      // --------------------------------------------------------------
+      {
+        "when": "${subtitle}",
+        "id": "${_id}-subtitle",
+        "type": "text",
+        "text": "${subtitle}",
+        "style": {
+          "size": "${size * 0.2}",
+          "color": "${color}",
+          "align": "left",
+          "letterSpacing": "${size * 0.05}",
+          "shadow": {
+            "color": "rgba(0,0,0,0.45)",
+            "blur": "${max(3, size * 0.06)}",
+            "offsetX": 0,
+            "offsetY": "${max(1, size * 0.02)}"
+          }
+        },
+        "transform": {
+          "x": "${width * 0.09}",
+          "y": "${centerY + size * 0.95}",
+          "anchorX": 0,
+          "anchorY": 0.5,
+          "opacity": 0
+        },
+        "animations": [
+          {
+            "property": "transform.opacity",
+            "keyframes": [
+              { "time": "${240 / bpm * 0.6}", "value": 0 },
+              { "time": "${240 / bpm * 1.25}", "value": 1, "easing": "easeOutCubic" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 9. クレジット — **静止**。ロールにはしません。
+      //    改行を含む文字列をそのまま受けるので、複数行のクレジットは
+      //    行送り 1.6 でそのまま組まれます。
+      //    置き場所は **rich-intro のクレジットと同じ左の列**（width * 0.09）です。
+      //    右下に置いていたら人物とぶつかったので左へ寄せました。曲名・副題・
+      //    クレジットが 1 本の縦線に揃うので «同じ場所へ帰ってきた» が強くなります。
+      //    anchorY を 1 にしているのは、行数が増えたときに上へ伸ばすためです
+      //    （下へ伸ばすと画面外に落ちます）。
+      // --------------------------------------------------------------
+      {
+        "when": "${credit}",
+        "id": "${_id}-credit",
+        "type": "text",
+        "text": "${credit}",
+        "style": {
+          "size": "${size * 0.16}",
+          "color": "${color}",
+          "align": "left",
+          "lineHeight": 1.6,
+          "letterSpacing": "${size * 0.03}",
+          "shadow": {
+            "color": "rgba(0,0,0,0.45)",
+            "blur": "${max(3, size * 0.05)}",
+            "offsetX": 0,
+            "offsetY": "${max(1, size * 0.02)}"
+          }
+        },
+        "transform": {
+          "x": "${width * 0.09}",
+          "y": "${height * 0.92}",
+          "anchorX": 0,
+          "anchorY": 1,
+          "opacity": 0
+        },
+        "animations": [
+          {
+            "property": "transform.opacity",
+            "keyframes": [
+              { "time": "${240 / bpm * 0.9}", "value": 0 },
+              { "time": "${240 / bpm * 1.6}", "value": 0.88, "easing": "easeOutCubic" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 10. 仕上げ — rich-intro と同じ 4 つを frameBuffer で 1 回にまとめます。
+      //     彩度は rich-intro の «終わりの値»（-0.38）で止めたまま動かしません。
+      //     ビネットだけ少しだけ強く（0.42 → 0.5）して、画面を閉じていきます。
+      //     ここも動かさないので «静止» は壊れません。
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-grade",
+        "type": "frameBuffer",
+        "frameBuffer": { "source": "below", "clear": true },
+        "transform": {
+          "x": 0,
+          "y": 0,
+          "anchorX": 0,
+          "anchorY": 0
+        },
+        "effects": [
+          {
+            "type": "colorAdjust",
+            "saturation": -0.38,
+            "contrast": 0.08,
+            "brightness": -0.02
+          },
+          {
+            "type": "gradientOverlay",
+            "angle": 118,
+            "blend": "overlay",
+            "opacity": 0.26,
+            "stops": [
+              { "offset": 0, "color": "${accent}" },
+              { "offset": 1, "color": "${background}" }
+            ]
+          },
+          {
+            "type": "vignette",
+            "amount": 0.5,
+            "radius": 0.56,
+            "softness": 0.55
+          },
+          {
+            "type": "noise",
+            "amount": 0.045,
+            "monochrome": true
+          }
+        ]
+      }
+    ]
+  }
+}

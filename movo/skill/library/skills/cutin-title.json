@@ -1,0 +1,171 @@
+{
+  "skill": {
+    "name": "cutin-title",
+    "title": "集中線カットイン",
+    "description": "集中線が開きながら文字が集まってくる、サビ前の定番。",
+    "category": "title",
+    "tags": [
+      "集中線",
+      "カットイン",
+      "BPM"
+    ],
+    "learnedFrom": [
+      "https://sigablog.com/entry/2020/07/25/%E3%80%90Aviutl%E3%80%91%E3%82%88%E3%81%8F%E4%BD%BF%E3%81%86%E3%82%A8%E3%83%95%E3%82%A7%E3%82%AF%E3%83%88%E9%9B%86%EF%BD%9C%E4%BD%BF%E3%81%84%E6%96%B9%E3%81%A8%E4%BD%B5%E3%81%9B%E3%81%A6%E7%B4%B9",
+      "https://seguimiii.com/aviutl-tech/speedyline"
+    ]
+  },
+  "inputs": {
+    "text": {
+      "type": "text",
+      "default": "サビ",
+      "label": "文字",
+      "required": true
+    },
+    "textColor": {
+      "type": "color",
+      "default": "#ffffff"
+    },
+    "lineColor": {
+      "type": "color",
+      "default": "#ffffff"
+    },
+    "textSize": {
+      "type": "number",
+      "unit": "px",
+      "default": 140,
+      "min": 8
+    },
+    "bpm": {
+      "type": "number",
+      "default": 174,
+      "min": 1
+    },
+    "lines": {
+      "type": "boolean",
+      "default": true,
+      "label": "集中線を出す"
+    },
+    "lineCount": {
+      "type": "number",
+      "default": 180,
+      "min": 4,
+      "max": 2000
+    },
+    "duration": {
+      "type": "number",
+      "default": 3,
+      "min": 0.2
+    },
+    "background": {
+      "type": "color",
+      "default": "#12081c"
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+  "project": {
+    "bpm": 174
+  },
+  "layers": [
+    {
+      "id": "${_id}-bg",
+      "type": "shader",
+      "shader": {
+        "expression": "0.35 + 0.5 * pow(max(0, 1 - hypot(u - 0.5, v - 0.5) * 1.7), 2)",
+        "colorA": "${background}",
+        "colorB": "#5a2a7a",
+        "resolution": 96
+      },
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": "${width}",
+        "height": "${height}",
+        "anchorX": 0,
+        "anchorY": 0
+      }
+    },
+    {
+      "when": "${lines}",
+      "id": "${_id}-lines",
+      "type": "speedLines",
+      "speedLines": {
+        "count": "${lineCount}",
+        "innerRadius": {
+          "keyframes": [
+            {
+              "time": 0,
+              "value": 0.03
+            },
+            {
+              "time": "${min(0.9, duration * 0.3)}",
+              "value": 0.42,
+              "easing": "easeOutExpo"
+            }
+          ]
+        },
+        "thickness": "${max(1, 1.1 * scale)}",
+        "density": 0.52,
+        "jitter": 0.7,
+        "color": "${lineColor}",
+        "speed": 0.5
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "width": "${width}",
+        "height": "${height}",
+        "anchorX": 0.5,
+        "anchorY": 0.5,
+        "opacity": 0.85
+      }
+    },
+    {
+      "id": "${_id}-text",
+      "type": "text",
+      "text": "${text}",
+      "style": {
+        "size": "${textSize}",
+        "color": "${textColor}",
+        "align": "center",
+        "stroke": {
+          "color": "#00000077",
+          "width": "${textSize * 0.05}"
+        }
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "scatter-in",
+          "with": {
+            "stagger": 0.035,
+            "duration": 0.7
+          }
+        },
+        {
+          "animation": "beat-bounce",
+          "with": {
+            "amount": 0.06,
+            "decay": 9
+          }
+        }
+      ],
+      "effects": [
+        {
+          "type": "bloom",
+          "threshold": 0.55,
+          "radius": "${18 * scale}",
+          "intensity": 0.7
+        }
+      ]
+    }
+  ]
+}

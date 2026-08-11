@@ -1,0 +1,79 @@
+{
+  "animation": {
+    "name": "pop-in",
+    "title": "ポップイン",
+    "description": "小さい状態から少し行き過ぎて戻る登場。easeOutBack が効く。",
+    "category": "in",
+    "tags": [
+      "登場",
+      "scale"
+    ]
+  },
+  "inputs": {
+    "delay": {
+      "type": "number",
+      "default": 0
+    },
+    "duration": {
+      "type": "number",
+      "default": 0.55,
+      "min": 0.01
+    },
+    "from": {
+      "type": "number",
+      "default": 0.4,
+      "min": 0,
+      "label": "開始倍率"
+    },
+    "easing": {
+      "type": "text",
+      "default": "easeOutBack",
+      "label": "イージング"
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.opacity",
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": 0
+          },
+          {
+            "time": "${delay + duration * 0.5}",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "property": "transform.scaleX",
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": "${from}"
+          },
+          {
+            "time": "${delay + duration}",
+            "value": 1,
+            "easing": "${easing}"
+          }
+        ]
+      },
+      {
+        "property": "transform.scaleY",
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": "${from}"
+          },
+          {
+            "time": "${delay + duration}",
+            "value": 1,
+            "easing": "${easing}"
+          }
+        ]
+      }
+    ]
+  }
+}

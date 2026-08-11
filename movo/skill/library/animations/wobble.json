@@ -1,0 +1,49 @@
+{
+  "animation": {
+    "name": "wobble",
+    "title": "ゆらぎ回転",
+    "description": "正弦波とノイズを混ぜた自然な首振り。等速回転より生っぽい。",
+    "category": "loop",
+    "tags": [
+      "ループ",
+      "rotation",
+      "noise"
+    ]
+  },
+  "inputs": {
+    "frequency": {
+      "type": "number",
+      "default": 1,
+      "min": 0.01
+    },
+    "amplitude": {
+      "type": "number",
+      "default": 8
+    },
+    "noise": {
+      "type": "number",
+      "default": 2
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.rotation",
+        "relative": true,
+        "modulators": [
+          {
+            "type": "sine",
+            "frequency": "${frequency}",
+            "amplitude": "${amplitude}"
+          },
+          {
+            "type": "noise",
+            "frequency": "${frequency * 8}",
+            "amplitude": "${noise}"
+          }
+        ],
+        "combine": "add"
+      }
+    ]
+  }
+}

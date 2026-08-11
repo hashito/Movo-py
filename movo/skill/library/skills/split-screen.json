@@ -1,0 +1,317 @@
+{
+  "skill": {
+    "name": "split-screen",
+    "title": "分割画面",
+    "description": "画面を縦横に分けて、各マスにコンポジションを敷く。継ぎ目の線と «1 枚への統合» つき。",
+    "category": "background",
+    "tags": [
+      "分割",
+      "レイアウト",
+      "コンポジション"
+    ],
+    "learnedFrom": [
+      "https://www.youtube.com/watch?v=1agnFYE3H6c"
+    ]
+  },
+  "inputs": {
+    "columns": {
+      "type": "number",
+      "label": "横の分割数",
+      "default": 2,
+      "min": 1,
+      "max": 8
+    },
+    "rows": {
+      "type": "number",
+      "label": "縦の分割数",
+      "default": 1,
+      "min": 1,
+      "max": 8
+    },
+    "panels": {
+      "type": "list",
+      "label": "各マスに敷くコンポジション名（左上から右へ）",
+      "default": []
+    },
+    "colors": {
+      "type": "list",
+      "label": "コンポジションを指定しないマスの色",
+      "default": [
+        "#f0c33c",
+        "#3a6b8c",
+        "#e04e39",
+        "#2a2118"
+      ]
+    },
+    "seam": {
+      "type": "number",
+      "unit": "px",
+      "label": "継ぎ目の太さ（0 で継ぎ目なし）",
+      "default": 8,
+      "min": 0
+    },
+    "seamColor": {
+      "type": "color",
+      "label": "継ぎ目の色",
+      "default": "#2a2118"
+    },
+    "merge": {
+      "type": "number",
+      "label": "この時刻に 1 枚へ統合する（0 で分割のまま）",
+      "default": 0,
+      "min": 0
+    },
+    "zIndex": {
+      "type": "number",
+      "label": "重ね順（既定は «いちばん奥»）",
+      "default": -10
+    }
+  },
+  "duration": 4,
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#000000"
+  },
+  "layers": [
+    {
+      "repeat": {
+        "count": "${columns * rows}",
+        "as": "i"
+      },
+      "id": "${_id}-fill-${i}",
+      "type": "shape",
+      "zIndex": "${zIndex}",
+      "shape": {
+        "type": "rectangle",
+        "width": "${width / columns}",
+        "height": "${height / rows}",
+        "fill": "${colors[mod(i, max(1, colors.length))]}"
+      },
+      "transform": {
+        "x": "${width / columns * (mod(i, columns) + 0.5)}",
+        "y": "${height / rows * (floor(i / columns) + 0.5)}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "animations": [
+        {
+          "when": "${merge > 0}",
+          "property": "transform.x",
+          "keyframes": [
+            {
+              "time": "${merge}",
+              "value": "${width / columns * (mod(i, columns) + 0.5)}"
+            },
+            {
+              "time": "${merge + 0.5}",
+              "value": "${width / 2}",
+              "easing": "easeInOutCubic"
+            }
+          ]
+        },
+        {
+          "when": "${merge > 0}",
+          "property": "transform.y",
+          "keyframes": [
+            {
+              "time": "${merge}",
+              "value": "${height / rows * (floor(i / columns) + 0.5)}"
+            },
+            {
+              "time": "${merge + 0.5}",
+              "value": "${height / 2}",
+              "easing": "easeInOutCubic"
+            }
+          ]
+        },
+        {
+          "when": "${merge > 0}",
+          "property": "transform.scaleX",
+          "keyframes": [
+            {
+              "time": "${merge}",
+              "value": 1
+            },
+            {
+              "time": "${merge + 0.5}",
+              "value": "${columns}",
+              "easing": "easeInOutCubic"
+            }
+          ]
+        },
+        {
+          "when": "${merge > 0}",
+          "property": "transform.scaleY",
+          "keyframes": [
+            {
+              "time": "${merge}",
+              "value": 1
+            },
+            {
+              "time": "${merge + 0.5}",
+              "value": "${rows}",
+              "easing": "easeInOutCubic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "repeat": {
+        "count": "${min(panels.length, columns * rows)}",
+        "as": "i"
+      },
+      "id": "${_id}-panel-${i}",
+      "type": "composition",
+      "composition": "${panels[i]}",
+      "zIndex": "${zIndex}",
+      "transform": {
+        "x": "${width / columns * (mod(i, columns) + 0.5)}",
+        "y": "${height / rows * (floor(i / columns) + 0.5)}",
+        "width": "${width / columns}",
+        "height": "${height / rows}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "animations": [
+        {
+          "when": "${merge > 0}",
+          "property": "transform.x",
+          "keyframes": [
+            {
+              "time": "${merge}",
+              "value": "${width / columns * (mod(i, columns) + 0.5)}"
+            },
+            {
+              "time": "${merge + 0.5}",
+              "value": "${width / 2}",
+              "easing": "easeInOutCubic"
+            }
+          ]
+        },
+        {
+          "when": "${merge > 0}",
+          "property": "transform.y",
+          "keyframes": [
+            {
+              "time": "${merge}",
+              "value": "${height / rows * (floor(i / columns) + 0.5)}"
+            },
+            {
+              "time": "${merge + 0.5}",
+              "value": "${height / 2}",
+              "easing": "easeInOutCubic"
+            }
+          ]
+        },
+        {
+          "when": "${merge > 0}",
+          "property": "transform.scaleX",
+          "keyframes": [
+            {
+              "time": "${merge}",
+              "value": 1
+            },
+            {
+              "time": "${merge + 0.5}",
+              "value": "${columns}",
+              "easing": "easeInOutCubic"
+            }
+          ]
+        },
+        {
+          "when": "${merge > 0}",
+          "property": "transform.scaleY",
+          "keyframes": [
+            {
+              "time": "${merge}",
+              "value": 1
+            },
+            {
+              "time": "${merge + 0.5}",
+              "value": "${rows}",
+              "easing": "easeInOutCubic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "repeat": {
+        "count": "${seam > 0 ? columns - 1 : 0}",
+        "as": "c"
+      },
+      "id": "${_id}-seam-v-${c}",
+      "type": "shape",
+      "zIndex": "${zIndex + 1}",
+      "shape": {
+        "type": "rectangle",
+        "width": "${seam}",
+        "height": "${height}",
+        "fill": "${seamColor}"
+      },
+      "transform": {
+        "x": "${width / columns * (c + 1)}",
+        "y": "${height / 2}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "animations": [
+        {
+          "when": "${merge > 0}",
+          "property": "transform.scaleX",
+          "keyframes": [
+            {
+              "time": "${merge}",
+              "value": 1
+            },
+            {
+              "time": "${merge + 0.5}",
+              "value": 0,
+              "easing": "easeInOutCubic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "repeat": {
+        "count": "${seam > 0 ? rows - 1 : 0}",
+        "as": "r"
+      },
+      "id": "${_id}-seam-h-${r}",
+      "type": "shape",
+      "zIndex": "${zIndex + 1}",
+      "shape": {
+        "type": "rectangle",
+        "width": "${width}",
+        "height": "${seam}",
+        "fill": "${seamColor}"
+      },
+      "transform": {
+        "x": "${width / 2}",
+        "y": "${height / rows * (r + 1)}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "animations": [
+        {
+          "when": "${merge > 0}",
+          "property": "transform.scaleY",
+          "keyframes": [
+            {
+              "time": "${merge}",
+              "value": 1
+            },
+            {
+              "time": "${merge + 0.5}",
+              "value": 0,
+              "easing": "easeInOutCubic"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

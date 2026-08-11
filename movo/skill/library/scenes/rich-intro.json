@@ -1,0 +1,589 @@
+{
+  // ------------------------------------------------------------------
+  // rich-intro — «掴み» のイントロ（既定 3 小節）
+  //
+  // 制作論の調査から、このシーンが守っている約束は 4 つです。
+  //
+  //   1. 0 秒から絵を出す。黒画面 → ロゴ → タイトル という «律儀な» 入りは
+  //      してはいけない、というのが記事横断の一致した見解でした。
+  //      そのため scene.transition.in は 0 で、素材が無くても
+  //      空（sky）・もや（haze）・前ボケ（bokeh）だけで画が立ち上がります。
+  //   2. 切らない（1 カット）。全部のレイヤーが «同じ向きにゆっくり» 動き続けます。
+  //      イージングは掛けません（linear）。等速で動き続けると視線が次の絵へ流れ、
+  //      体感時間が縮みます。イージングを掛けた瞬間に «技法» が見えます。
+  //   3. 色を «後で解放する余地» を残す。仕上げの colorAdjust で彩度を落として
+  //      あります（-0.55 → -0.38 へゆっくり戻す）。サビで彩度を開いたときの
+  //      落差はここで作ります。
+  //   4. 曲名は 1 小節目に出して 3 小節目で消す。時刻はすべて BPM から
+  //      «小節» で計算しているので、曲を変えても «1 小節目に出る» が保たれます。
+  //
+  // 素材名はすべて入力値で受けます（artAsset / figureAsset）。
+  // 素材の宣言はプロジェクト側の仕事なので、ここにパスは書きません。
+  //
+  // 式の中では «1 小節の秒数» を何度も使います。変数を持てないので
+  // (240 / bpm) を直接書いています（4/4 拍子で 1 小節 ＝ 4 拍）。
+  // ------------------------------------------------------------------
+  "skill": {
+    "name": "rich-intro",
+    "kind": "scene",
+    "title": "イントロ（1 カットで掴む）",
+    "description": "0 秒から絵を出し、切らずにゆっくり流し続ける立ち上がり。彩度を落としてサビに «解放する余地» を残す。既定は 3 小節。",
+    "category": "title",
+    "tags": [
+      "MV",
+      "イントロ",
+      "シーン",
+      "1 カット",
+      "低彩度"
+    ]
+  },
+
+  "inputs": {
+    "title": {
+      "type": "text",
+      "label": "曲名",
+      "default": "無題"
+    },
+    "subtitle": {
+      "type": "text",
+      "label": "副題（空で消える）",
+      "default": ""
+    },
+    // イントロにもクレジットを置けるようにしてあります（作詞作曲の 1 行）。
+    // 既定は空なので、書かなければ何も出ません。
+    "credit": {
+      "type": "text",
+      "label": "小さなクレジット（空で消える）",
+      "default": ""
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 3,
+      "min": 0.25,
+      "max": 64
+    },
+    // プロジェクトに組み込むと project.bpm のほうが強く、こちらは
+    // «単体で描くときの既定» になります（movo skill render rich-intro）。
+    "bpm": {
+      "type": "number",
+      "label": "BPM（時刻の計算に使う）",
+      "default": 148,
+      "min": 20,
+      "max": 400
+    },
+    "background": {
+      "type": "color",
+      "label": "背景色",
+      "default": "#141a16"
+    },
+    "color": {
+      "type": "color",
+      "label": "文字色",
+      "default": "#f0ece2"
+    },
+    "accent": {
+      "type": "color",
+      "label": "差し色（線・前ボケ・色被り）",
+      "default": "#a8c98a"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "label": "曲名の大きさ",
+      "default": 104,
+      "min": 8
+    },
+    "artAsset": {
+      "type": "asset",
+      "label": "背景画像の素材名（空なら空だけ）",
+      "default": ""
+    },
+    "figureAsset": {
+      "type": "asset",
+      "label": "人物画像の素材名（空なら置かない）",
+      "default": ""
+    }
+  },
+
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+
+  // 曲名の登場（1 拍）は畳みません。BPM が倍になっても «1 拍で出る» が保たれます。
+  "responsiveTime": {
+    "in": "1beat"
+  },
+
+  "scene": {
+    "duration": "${bars}bar",
+    "background": "${background}",
+
+    // in は 0。**黒からのフェードインを入れない**のがこのシーンの肝です。
+    // out は 1/4 小節。次のカットへは «切って» 渡します。
+    "transition": {
+      "type": "fade",
+      "in": 0,
+      "out": "${240 / bpm * 0.25}"
+    },
+
+    "layers": [
+      // --------------------------------------------------------------
+      // 1. 空 — 素材が無くても 0 秒に «画» があるための下地。
+      //    上から差し色、下へ背景色。画面の 70% を占める «ベース» です。
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-sky",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width * 1.2}",
+          "height": "${height * 1.25}",
+          "fill": {
+            "type": "linear",
+            "angle": 90,
+            "stops": [
+              { "offset": 0, "color": "${accent}" },
+              { "offset": 0.42, "color": "${background}" },
+              { "offset": 1, "color": "${background}" }
+            ]
+          }
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        // いちばん奥なので、いちばんゆっくり流れます（視差の «遠景»）。
+        "animations": [
+          {
+            "property": "transform.y",
+            "relative": true,
+            "keyframes": [
+              { "time": 0, "value": 0 },
+              { "time": "${240 / bpm * bars}", "value": "${height * 0.014}", "easing": "linear" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 2. 背景画像 — 等速のケン・バーンズ。
+      //    ズームは «10 秒で 5〜10%» が自然に見える上限なので、
+      //    尺に比例させて 10 秒あたり 7% になる量だけ寄せます。
+      //    パンも同じ考えで «10 秒で 1920px 幅の 5.5%（約 105px）» に合わせています。
+      //    イージングは掛けません。等速でないと «寄せているぞ» が見えます。
+      //
+      //    ここは人物と違って width / height を**両方**書いています。
+      //    Movo には «cover»（比率を保ったまま画面を覆う）が無いので、
+      //    片方だけ書くと素材の実ピクセル数がそのまま残り、
+      //    背景に隙間が空きます。**背景板は画面を埋めるのが仕事**なので、
+      //    多少伸びても隙間が空くよりましだ、という判断です。
+      //    16:9 に近い素材（sky-wide / grass-meadow / clouds-field など）を
+      //    渡すと伸びがほとんど見えません。
+      // --------------------------------------------------------------
+      {
+        "when": "${artAsset}",
+        "id": "${_id}-art",
+        "type": "image",
+        "asset": "${artAsset}",
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "width": "${width * 1.16}",
+          "height": "${height * 1.16}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "animations": [
+          {
+            "property": "transform.scaleX",
+            "keyframes": [
+              { "time": 0, "value": 1 },
+              { "time": "${240 / bpm * bars}", "value": "${1 + 0.007 * (240 / bpm * bars)}", "easing": "linear" }
+            ]
+          },
+          {
+            "property": "transform.scaleY",
+            "keyframes": [
+              { "time": 0, "value": 1 },
+              { "time": "${240 / bpm * bars}", "value": "${1 + 0.007 * (240 / bpm * bars)}", "easing": "linear" }
+            ]
+          },
+          {
+            "property": "transform.x",
+            "relative": true,
+            "keyframes": [
+              { "time": 0, "value": 0 },
+              { "time": "${240 / bpm * bars}", "value": "${-width * 0.0055 * (240 / bpm * bars)}", "easing": "linear" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 3. もや — 空気を 1 枚挟む。素材は要りません。
+      //    «見えないけど効いている» 強さ（不透明度 0.14）にとどめます。
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-haze",
+        "type": "fractalNoise",
+        "blend": "screen",
+        "fractalNoise": {
+          "type": "fbm",
+          "octaves": 3,
+          "scale": 0.0022,
+          "evolution": { "expression": "time * 0.05" },
+          "scrollX": 7,
+          "contrast": 1.25,
+          "colorA": "rgba(0,0,0,0)",
+          "colorB": "${color}",
+          "resolution": 150
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "width": "${width}",
+          "height": "${height}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.14
+        }
+      },
+
+      // --------------------------------------------------------------
+      // 4. 人物 — 逆光の縁だけ光らせて背景から浮かせます。
+      //    背景と «逆向き» にわずかに流すと、それだけで奥行きが出ます。
+      //
+      //    **ここで width / height を書いてはいけません。**
+      //    Movo の image レイヤーは、片方だけ書くともう片方が «素材の
+      //    ピクセル数» のまま残ります（比率では追従しません）。960x3448 の
+      //    立ち姿に height だけ渡したら、960x620 に潰れて画面半分を覆う
+      //    黒い塊になりました。**形を保ちたいときは scale です。**
+      //    素材は 960px 幅前後で揃っているので、scale で «画面に対する幅»
+      //    をそろえ、高さは素材の縦横比に任せます。
+      //    足元を床（height * 0.98）に置くので、縦長でも横長でも
+      //    «立っている» ように見えます。
+      // --------------------------------------------------------------
+      {
+        "when": "${figureAsset}",
+        "id": "${_id}-figure",
+        "type": "image",
+        "asset": "${figureAsset}",
+        "transform": {
+          "x": "${width * 0.74}",
+          "y": "${height * 0.98}",
+          "scale": "${scale * 0.28}",
+          "anchorX": 0.5,
+          "anchorY": 1
+        },
+        "effects": [
+          {
+            "type": "rimLight",
+            "angle": -38,
+            "width": "${max(4, 13 * scale)}",
+            "color": "${color}",
+            "intensity": 1.1
+          }
+        ],
+        "animations": [
+          {
+            "property": "transform.x",
+            "relative": true,
+            "keyframes": [
+              { "time": 0, "value": 0 },
+              { "time": "${240 / bpm * bars}", "value": "${width * 0.0022 * (240 / bpm * bars)}", "easing": "linear" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 5. 前ボケ — **最小コストで最大の奥行き**。手前のボケた草むらです。
+      //    手前ほど速く流れるので、いちばん大きく動かします。
+      //
+      //    ここは 2 回作り直しました。最初は角丸の長方形＋ぼかし 42px で
+      //    したが、**上辺の直線がはっきり見えて «半透明の板» にしか
+      //    見えません**でした。ぼかしを 150px まで上げても、直線は
+      //    «ぼけた直線» になるだけで消えません。
+      //    そこで **楕円** にして、画面には «上の弧» だけが入るよう
+      //    下（height * 1.34）へ沈めています。曲線ならぼかしたときに
+      //    輪郭が残らないので、ようやく «ピントの外» に見えました。
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-bokeh",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": "${width * 2.2}",
+          "height": "${height * 0.9}",
+          "fill": "${accent}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${height * 1.34}",
+          "rotation": -2.6,
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.34
+        },
+        "effects": [
+          { "type": "blur", "radius": "${max(26, 150 * scale)}" }
+        ],
+        "animations": [
+          {
+            "property": "transform.x",
+            "relative": true,
+            "keyframes": [
+              { "time": 0, "value": 0 },
+              { "time": "${240 / bpm * bars}", "value": "${width * 0.011 * (240 / bpm * bars)}", "easing": "linear" }
+            ]
+          },
+          {
+            "property": "transform.rotation",
+            "keyframes": [
+              { "time": 0, "value": -2.6 },
+              { "time": "${240 / bpm * bars}", "value": -1.2, "easing": "linear" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 6. 曲名 — 1 小節目に出て、3 小節目の頭で消えます。
+      //    位置・大きさ・組み方は rich-outro と **まったく同じ式**です。
+      //    最後に同じ字が同じ場所へ戻ることで «帰ってきた» 感が出ます。
+      //      x = width * 0.09（左寄せ）  y = centerY
+      //    縁取りは «文字サイズの 5〜10%» の範囲（6%）。太いと字が潰れます。
+      //    ブルームは 1 発だと安っぽいので、半径違いを 2 枚重ねています。
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-title",
+        "type": "text",
+        "text": "${title}",
+        "style": {
+          "size": "${size}",
+          "color": "${color}",
+          "align": "left",
+          "weight": "bold",
+          "letterSpacing": "${size * 0.04}",
+          "stroke": {
+            "color": "${background}",
+            "width": "${size * 0.06}"
+          },
+          "shadow": {
+            "color": "rgba(0,0,0,0.5)",
+            "blur": "${max(4, size * 0.14)}",
+            "offsetX": 0,
+            "offsetY": "${max(2, size * 0.04)}"
+          },
+          "fit": {
+            "mode": "shrink",
+            "maxWidth": "78%",
+            "minSize": 0.5
+          }
+        },
+        "transform": {
+          "x": "${width * 0.09}",
+          "y": "${centerY}",
+          "anchorX": 0,
+          "anchorY": 0.5
+        },
+        "effects": [
+          { "type": "glow", "radius": "${max(3, size * 0.06)}", "intensity": 0.32, "color": "${accent}" },
+          { "type": "glow", "radius": "${max(8, size * 0.2)}", "intensity": 0.2, "color": "${accent}" }
+        ],
+        "animations": [
+          {
+            // 1 小節目のあいだに出て、3 小節目の頭（＝ 2 小節経過）で消える。
+            // 短い尺で使われたときのために、消える時刻は尺の 72% で頭打ちにします。
+            "property": "transform.opacity",
+            "keyframes": [
+              { "time": "${240 / bpm * 0.12}", "value": 0 },
+              { "time": "${240 / bpm * 0.62}", "value": 1, "easing": "easeOutCubic" },
+              { "time": "${min(240 / bpm * 2, _duration * 0.72)}", "value": 1 },
+              { "time": "${min(240 / bpm * 2, _duration * 0.72) + 240 / bpm * 0.3}", "value": 0, "easing": "easeInCubic" }
+            ]
+          },
+          {
+            "property": "transform.y",
+            "relative": true,
+            "keyframes": [
+              { "time": "${240 / bpm * 0.12}", "value": "${size * 0.24}" },
+              { "time": "${240 / bpm * 0.72}", "value": 0, "easing": "easeOutCubic" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 7. 差し色の線 — 画面で差し色が占めるのはここと色被りだけ（面積 5% 程度）。
+      //    曲名と一緒に引かれ、曲名と一緒に引っ込みます。
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-rule",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${size * 4.6}",
+          "height": "${max(2, size * 0.028)}",
+          "fill": "${accent}"
+        },
+        "transform": {
+          "x": "${width * 0.09}",
+          "y": "${centerY + size * 0.68}",
+          "anchorX": 0,
+          "anchorY": 0.5,
+          "scaleX": 0
+        },
+        "animations": [
+          {
+            "property": "transform.scaleX",
+            "keyframes": [
+              { "time": "${240 / bpm * 0.28}", "value": 0 },
+              { "time": "${240 / bpm * 0.95}", "value": 1, "easing": "easeOutCubic" },
+              { "time": "${min(240 / bpm * 2, _duration * 0.72)}", "value": 1 },
+              { "time": "${min(240 / bpm * 2, _duration * 0.72) + 240 / bpm * 0.3}", "value": 0, "easing": "easeInCubic" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 8. 副題 — 線の下。曲名より 1 拍遅れて出て、曲名と一緒に消えます。
+      // --------------------------------------------------------------
+      {
+        "when": "${subtitle}",
+        "id": "${_id}-subtitle",
+        "type": "text",
+        "text": "${subtitle}",
+        "style": {
+          "size": "${size * 0.2}",
+          "color": "${color}",
+          "align": "left",
+          "letterSpacing": "${size * 0.05}",
+          "shadow": {
+            "color": "rgba(0,0,0,0.45)",
+            "blur": "${max(3, size * 0.06)}",
+            "offsetX": 0,
+            "offsetY": "${max(1, size * 0.02)}"
+          }
+        },
+        "transform": {
+          "x": "${width * 0.09}",
+          "y": "${centerY + size * 0.95}",
+          "anchorX": 0,
+          "anchorY": 0.5
+        },
+        "animations": [
+          {
+            "property": "transform.opacity",
+            "keyframes": [
+              { "time": "${240 / bpm * 0.5}", "value": 0 },
+              { "time": "${240 / bpm * 1}", "value": 1, "easing": "easeOutCubic" },
+              { "time": "${min(240 / bpm * 2, _duration * 0.72)}", "value": 1 },
+              { "time": "${min(240 / bpm * 2, _duration * 0.72) + 240 / bpm * 0.3}", "value": 0, "easing": "easeInCubic" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 9. クレジット — 画面の隅に小さく。出したら最後まで置いたままにします
+      //    （出入りが多いほど «律儀» に見えるため）。
+      // --------------------------------------------------------------
+      {
+        "when": "${credit}",
+        "id": "${_id}-credit",
+        "type": "text",
+        "text": "${credit}",
+        "style": {
+          "size": "${size * 0.16}",
+          "color": "${color}",
+          "align": "left",
+          "letterSpacing": "${size * 0.03}"
+        },
+        "transform": {
+          "x": "${width * 0.09}",
+          "y": "${height * 0.9}",
+          "anchorX": 0,
+          "anchorY": 0.5,
+          "opacity": 0
+        },
+        "animations": [
+          {
+            "property": "transform.opacity",
+            "keyframes": [
+              { "time": "${240 / bpm * 1.1}", "value": 0 },
+              { "time": "${240 / bpm * 1.7}", "value": 0.8, "easing": "easeOutCubic" }
+            ]
+          }
+        ]
+      },
+
+      // --------------------------------------------------------------
+      // 10. 仕上げ — frameBuffer で **1 回にまとめて** 掛けます。
+      //     レイヤーごとに掛けると同じ処理を何度も走らせることになるので、
+      //     全画面の加工はここに集約しています（4 つまで）。
+      //
+      //     tone      : 彩度を落として «後で解放する余地» を作る。
+      //                 -0.55 から -0.38 へゆっくり戻し、サビへ橋を架けます。
+      //     色被り    : 差し色と背景色の 2 色だけ。画面の色数は 3 色に収まります。
+      //     ビネット  : 装飾ではなく **視線誘導**。曲名のあるあたりを残します。
+      //     グレイン  : 0.045（合成量にして 5% 弱）。主張したら負けです。
+      // --------------------------------------------------------------
+      {
+        "id": "${_id}-grade",
+        "type": "frameBuffer",
+        "frameBuffer": { "source": "below", "clear": true },
+        "transform": {
+          "x": 0,
+          "y": 0,
+          "anchorX": 0,
+          "anchorY": 0
+        },
+        "effects": [
+          {
+            "id": "tone",
+            "type": "colorAdjust",
+            "saturation": -0.55,
+            "contrast": 0.08,
+            "brightness": -0.02
+          },
+          {
+            "type": "gradientOverlay",
+            "angle": 118,
+            "blend": "overlay",
+            "opacity": 0.26,
+            "stops": [
+              { "offset": 0, "color": "${accent}" },
+              { "offset": 1, "color": "${background}" }
+            ]
+          },
+          {
+            "type": "vignette",
+            "amount": 0.42,
+            "radius": 0.6,
+            "softness": 0.55
+          },
+          {
+            "type": "noise",
+            "amount": 0.045,
+            "monochrome": true
+          }
+        ],
+        "animations": [
+          {
+            "property": "effects.tone.saturation",
+            "keyframes": [
+              { "time": 0, "value": -0.55 },
+              { "time": "${240 / bpm * bars}", "value": -0.38, "easing": "linear" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "animation": {
+    "name": "impact-shake",
+    "title": "一瞬だけ揺れる",
+    "description": "指定時刻からブルッと揺れて減衰する。常時振動を避けた衝撃表現。",
+    "category": "accent",
+    "tags": [
+      "アクセント",
+      "shake"
+    ]
+  },
+  "inputs": {
+    "at": {
+      "type": "number",
+      "default": 0,
+      "label": "開始時刻"
+    },
+    "amplitude": {
+      "type": "number",
+      "unit": "px",
+      "default": 26
+    },
+    "frequency": {
+      "type": "number",
+      "default": 16,
+      "min": 0.01
+    },
+    "decay": {
+      "type": "number",
+      "default": 7,
+      "min": 0
+    },
+    "rotate": {
+      "type": "number",
+      "default": 0,
+      "label": "回転量"
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.x",
+        "relative": true,
+        "modulator": {
+          "type": "shake",
+          "start": "${at}",
+          "frequency": "${frequency}",
+          "amplitude": "${amplitude}",
+          "decay": "${decay}"
+        }
+      },
+      {
+        "property": "transform.y",
+        "relative": true,
+        "modulator": {
+          "type": "shake",
+          "start": "${at}",
+          "frequency": "${frequency}",
+          "amplitude": "${amplitude * 0.6}",
+          "decay": "${decay}",
+          "seedOffset": 7
+        }
+      },
+      {
+        "when": "${rotate != 0}",
+        "property": "transform.rotation",
+        "relative": true,
+        "modulator": {
+          "type": "shake",
+          "start": "${at}",
+          "frequency": "${frequency}",
+          "amplitude": "${rotate}",
+          "decay": "${decay}",
+          "seedOffset": 13
+        }
+      }
+    ]
+  }
+}

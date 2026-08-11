@@ -1,0 +1,275 @@
+{
+  "skill": {
+    "name": "manga-panel",
+    "title": "漫画コマ風",
+    "description": "網点と輪郭で漫画のコマにする。コマ枠が引かれ、集中線が回り、セリフが飛び出す。",
+    "category": "look",
+    "tags": [
+      "漫画",
+      "ハーフトーン"
+    ],
+    "learnedFrom": [
+      "https://note.com/poison_fox/n/n756070c4e2d2"
+    ]
+  },
+  "inputs": {
+    "asset": {
+      "type": "asset",
+      "default": "",
+      "label": "画像素材（空ならトーンだけ）"
+    },
+    "text": {
+      "type": "text",
+      "default": "ここで決める",
+      "label": "セリフ（空で消える）"
+    },
+    "levels": {
+      "type": "number",
+      "default": 4,
+      "min": 2,
+      "max": 12
+    },
+    "dotSize": {
+      "type": "number",
+      "unit": "px",
+      "default": 5,
+      "min": 0
+    },
+    "lines": {
+      "type": "boolean",
+      "default": true,
+      "label": "集中線"
+    },
+    "frame": {
+      "type": "boolean",
+      "default": true,
+      "label": "コマ枠"
+    },
+    "duration": {
+      "type": "number",
+      "default": 4,
+      "min": 0.2
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#f4f1ea"
+  },
+  "layers": [
+    {
+      "when": "${!asset}",
+      "id": "${_id}-tone",
+      "type": "fractalNoise",
+      "fractalNoise": {
+        "type": "fbm",
+        "octaves": 4,
+        "scale": 0.0035,
+        "evolution": {
+          "expression": "time * 0.35"
+        },
+        "scrollX": 24,
+        "contrast": 1.5,
+        "colorA": "#f4f1ea",
+        "colorB": "#8d8a84",
+        "resolution": 220
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "width": "${width * 0.86}",
+        "height": "${height * 0.82}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "effects": [
+        {
+          "type": "posterize",
+          "levels": "${levels}"
+        },
+        {
+          "type": "halftone",
+          "dotSize": "${dotSize}",
+          "angle": 30
+        }
+      ]
+    },
+    {
+      "when": "${asset}",
+      "id": "${_id}-art",
+      "type": "image",
+      "asset": "${asset}",
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "width": "${width * 0.86}",
+        "height": "${height * 0.82}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "effects": [
+        {
+          "type": "mangaize",
+          "levels": "${levels}",
+          "edge": 1,
+          "dotSize": "${dotSize}"
+        }
+      ],
+      "use": [
+        {
+          "animation": "ken-burns",
+          "with": {
+            "duration": "${duration}",
+            "toScale": 1.14,
+            "panX": -40,
+            "panY": 10
+          }
+        }
+      ]
+    },
+    {
+      "when": "${lines}",
+      "id": "${_id}-lines",
+      "type": "speedLines",
+      "speedLines": {
+        "count": 170,
+        "style": "taperInner",
+        "innerRadius": {
+          "keyframes": [
+            {
+              "time": 0,
+              "value": 0.08
+            },
+            {
+              "time": "${min(0.7, _duration * 0.26)}",
+              "value": 0.36,
+              "easing": "easeOutExpo"
+            }
+          ]
+        },
+        "outerRadius": 1.3,
+        "thickness": "${max(1, 1.8 * scale)}",
+        "density": 0.5,
+        "jitter": 0.8,
+        "speed": 0.12,
+        "color": "#161616"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "width": "${width}",
+        "height": "${height}",
+        "anchorX": 0.5,
+        "anchorY": 0.5,
+        "opacity": 0.55
+      }
+    },
+    {
+      "when": "${frame}",
+      "id": "${_id}-frame",
+      "type": "linePath",
+      "linePath": {
+        "points": [
+          [
+            "${width * 0.07}",
+            "${height * 0.09}"
+          ],
+          [
+            "${width * 0.93}",
+            "${height * 0.09}"
+          ],
+          [
+            "${width * 0.93}",
+            "${height * 0.91}"
+          ],
+          [
+            "${width * 0.07}",
+            "${height * 0.91}"
+          ]
+        ],
+        "closed": true,
+        "thickness": "${max(2, 10 * scale)}",
+        "color": "#161616",
+        "cap": "round",
+        "end": {
+          "keyframes": [
+            {
+              "time": 0,
+              "value": 0
+            },
+            {
+              "time": "${min(0.9, _duration * 0.32)}",
+              "value": 1,
+              "easing": "easeInOutCubic"
+            }
+          ]
+        }
+      },
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": "${width}",
+        "height": "${height}",
+        "anchorX": 0,
+        "anchorY": 0
+      },
+      "modifiers": [
+        {
+          "type": "handDrawn",
+          "amount": "${max(1, 2.5 * scale)}",
+          "scale": 0.03,
+          "interval": 4
+        }
+      ]
+    },
+    {
+      "when": "${text}",
+      "id": "${_id}-line",
+      "type": "text",
+      "text": "${text}",
+      "style": {
+        "size": "${max(12, 52 * scale)}",
+        "color": "#161616",
+        "align": "center",
+        "weight": "bold"
+      },
+      "textBox": {
+        "padding": [
+          "${max(6, 18 * scale)}",
+          "${max(10, 34 * scale)}"
+        ],
+        "radius": "${max(4, 12 * scale)}",
+        "fill": "#ffffff",
+        "stroke": {
+          "color": "#161616",
+          "width": "${max(2, 5 * scale)}"
+        },
+        "skewX": -0.08
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${height * 0.78}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "pop-in",
+          "with": {
+            "delay": "${min(1.1, _duration * 0.4)}",
+            "duration": "${min(0.35, _duration * 0.2)}",
+            "from": 0.6
+          }
+        },
+        {
+          "animation": "float",
+          "with": {
+            "amplitude": "${max(2, 5 * scale)}",
+            "frequency": 0.7
+          }
+        }
+      ]
+    }
+  ]
+}

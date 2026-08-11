@@ -1,0 +1,613 @@
+{
+  "skill": {
+    "name": "rich-chorus",
+    "kind": "scene",
+    "title": "サビ（リッチ・variant で作り分ける）",
+    "description": "1 小節カットで歌詞を 1 単語ずつ叩き付ける、盛りきったサビ。variant で «基準 → 反転して足す → 抜く» を巡回させ、同じサビが 6 回来ても飽きないようにする。既定は 8 小節。",
+    "category": "lyric",
+    "tags": [
+      "MV",
+      "サビ",
+      "拍同期",
+      "リッチ",
+      "シーン"
+    ],
+    "learnedFrom": [
+      "docs/mv-effects-research.ja.md",
+      "docs/vocaloid-mv-study.ja.md"
+    ]
+  },
+  "// 設計のはなし": [
+    "1. «1 つを強く» ではなく «2 つ以上を薄く»。ブルームは半径違いを 2 枚、",
+    "   グレインとビネットは «見えない層» として薄く常時。1 発で決めると安く見える。",
+    "2. 色は 3 色（background / accent / second）＋ 文字色まで。面積比はベース 70%、",
+    "   絵 25%、accent 5% を基準にして、variant 2 のときだけ accent を 15% まで開く。",
+    "   «色相を動かす» のではなく «アクセントの面積を増やす» ほうが崩れない。",
+    "3. 回転は使わない。決めゴマの前後 0.3 秒も静止画として成立させたいので、",
+    "   動きはスケールと不透明度に寄せてある（回転は途中のコマが汚くなりやすい）。",
+    "4. 全画面に効くピクセル処理は base の gradientOverlay と grade の 5 個だけ。",
+    "   それ以外は文字・図形・素材のレイヤーに閉じているので描画時間が伸びない。",
+    "5. 明滅は «面積 9% の帯を 2 拍ごと» と «集中線を 1 カットごと» に限定。",
+    "   全画面を毎拍飛ばすと 148 BPM で毎秒 2.5 回になり、上限 3 回に張り付く。"
+  ],
+  "inputs": {
+    "lines": {
+      "type": "textList",
+      "label": "歌詞（1 要素 = 1 単語。1 カットに 1 つ出る）",
+      "default": [
+        "木",
+        "みたいな",
+        "草",
+        "だった",
+        "のびて",
+        "ゆれて",
+        "わらって",
+        "いた"
+      ]
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 8,
+      "min": 0.5,
+      "max": 64
+    },
+    "bpm": {
+      "type": "number",
+      "label": "BPM",
+      "default": 148,
+      "min": 20,
+      "max": 400
+    },
+    "background": {
+      "type": "color",
+      "label": "地の色",
+      "default": "#101c0e"
+    },
+    "color": {
+      "type": "color",
+      "label": "文字色",
+      "default": "#f4ffe6"
+    },
+    "accent": {
+      "type": "color",
+      "label": "差し色（面積 5%。variant 2 で 15% まで開く）",
+      "default": "#c8f04a"
+    },
+    "second": {
+      "type": "color",
+      "label": "もう 1 色（地のグラデーションと縁取りに回す）",
+      "default": "#ff8f4d"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "label": "歌詞の大きさ",
+      "default": 210,
+      "min": 24
+    },
+    "artAsset": {
+      "type": "asset",
+      "label": "背景の絵（宣言済みの素材名）",
+      "default": ""
+    },
+    "figureAsset": {
+      "type": "asset",
+      "label": "人物・立ち絵（宣言済みの素材名）",
+      "default": ""
+    },
+    "variant": {
+      "type": "number",
+      "label": "見え方（1 基準 / 2 反転して足す / 3 抜く。4 以降は巡回）",
+      "default": 1,
+      "min": 1,
+      "max": 64
+    },
+    "cut": {
+      "type": "number",
+      "label": "カット単位（小節）。1 = 1 小節、0.5 = 2 拍、0.25 = 1 拍",
+      "default": 1,
+      "min": 0.125,
+      "max": 4
+    }
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+  "responsiveTime": {
+    "// サビの «入りの 1 拍» だけは尺で伸び縮みさせない。": "",
+    "// ここが縮むと、叩き付けたはずの 1 単語目がぬるっと出てサビに聞こえなくなる。": "",
+    "in": "1beat",
+    "out": "1/2beat"
+  },
+  "scene": {
+    "duration": "${bars}bar",
+    "background": "${background}",
+    "transition": {
+      "type": "fade",
+      "in": 0.08,
+      "out": 0.16
+    },
+    "layers": [
+      {
+        "// 地。素材が無いときの下敷き。ここには何のエフェクトも掛けない。": "",
+        "id": "${_id}-base",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width}",
+          "height": "${height}",
+          "fill": "${background}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        }
+      },
+      {
+        "// 素材の «原寸» を測るためだけの控え。画面の外で不透明度 0 なので": "",
+        "// 1 ドットも描かれないが、layerStates には原寸が載る。これを次の": "",
+        "// レイヤーが layer('…-art-probe').width / .height で引く。": "",
+        "// transform に width と height を «両方» 書くと素材が潰れるので、": "",
+        "// 縦横比を保ったまま画面を覆うには倍率で指定するしかない。": "",
+        "// 素材は 960x3448 から 1920x920 まで来るので、決め打ちはできない。": "",
+        "when": "${artAsset}",
+        "id": "${_id}-art-probe",
+        "type": "image",
+        "asset": "${artAsset}",
+        "transform": {
+          "x": "${-width * 4}",
+          "y": "${-height * 4}",
+          "opacity": 0
+        }
+      },
+      {
+        "// 背景の絵。素材名は入力値で受ける（スキルにパスは書かない）。": "",
+        "// 幅と高さの «大きいほうに合わせる» ので、縦長でも横長でも必ず覆う。": "",
+        "// 少しだけ寄せ続ける。止まった絵の上に文字を置くと «スライド» に見える。": "",
+        "when": "${artAsset}",
+        "id": "${_id}-art",
+        "type": "image",
+        "asset": "${artAsset}",
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "// 地の色をうっすら透かす。素材が明るいと歌詞が乗らないので、": "",
+          "// «絵を暗く敷いて文字を明るく置く» 側に倒してある。": "",
+          "opacity": 0.72,
+          "scale": {
+            "expression": "max(${width} / max(1, layer('${_id}-art-probe').width), ${height} / max(1, layer('${_id}-art-probe').height)) * (1.02 + time * ${0.06 / _duration})"
+          }
+        }
+      },
+      {
+        "// 明度の配置。«上が濃く下が明るい» と «その逆» を variant で入れ替える。": "",
+        "// 上が濃いと不安定に、下が濃いと据わって見える。色相は動かさない。": "",
+        "// 乗算なので «白い側は素通し、地の色の側だけ沈む»。図形のグラデーション": "",
+        "// 塗りはラスタライズの一部なので、全画面ピクセル処理を 1 つも増やさない。": "",
+        "// （gradientOverlay エフェクトで同じことをすると 1 パス増える。": "",
+        "//  しかも素材の «下» に敷くと絵に隠れて明度配置が見えなかった。）": "",
+        "id": "${_id}-scrim",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width}",
+          "height": "${height}",
+          "fill": {
+            "type": "linear",
+            "angle": "${mod(floor(variant) - 1, 3) == 1 ? 270 : 90}",
+            "stops": [
+              {
+                "offset": 0,
+                "color": "${background}"
+              },
+              {
+                "offset": 0.66,
+                "color": "#ffffff"
+              },
+              {
+                "offset": 1,
+                "color": "#ffffff"
+              }
+            ]
+          }
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.9
+        },
+        "blend": "multiply"
+      },
+      {
+        "// 集中線。1 カットのアタマだけ内側から開く。variant 3 では «抜く»。": "",
+        "// 抜いたぶん歌詞だけが残るので、6 回のうち 1 回が静かになる。": "",
+        "when": "${mod(floor(variant) - 1, 3) != 2}",
+        "id": "${_id}-lines",
+        "type": "speedLines",
+        "speedLines": {
+          "count": 120,
+          "style": "taperInner",
+          "thickness": "${max(1, size * 0.008)}",
+          "color": "${color}",
+          "density": 0.42,
+          "innerRadius": {
+            "expression": "0.46 + beatPulse(bpm, ${cut * 4}, 7) * 0.26"
+          },
+          "outerRadius": 1.5,
+          "jitter": 0.75,
+          "seed": 41
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "width": "${width}",
+          "height": "${height}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.34
+        }
+      },
+      {
+        "// 差し色の帯。これが «accent の面積» そのもの。": "",
+        "// 基準 9% → variant 2 で 22%（見た目の accent 比が 5% → 15% に開く）": "",
+        "// → variant 3 では 3% の細い罫まで引く。色は変えない。": "",
+        "id": "${_id}-band",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width}",
+          "height": "${height * (mod(floor(variant) - 1, 3) == 1 ? 0.22 : (mod(floor(variant) - 1, 3) == 2 ? 0.03 : 0.09))}",
+          "fill": "${accent}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${height * 0.8}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "scaleX": 0,
+          "opacity": {
+            "expression": "0.5 + beatPulse(bpm, 2, 10) * 0.16"
+          }
+        },
+        "// スクリーンで乗せる。べた塗りだと «貼った色紙» に見えるが、": "",
+        "// 下の草の陰影が透けると «光が当たった帯» として画に馴染む。": "",
+        "blend": "screen",
+        "animations": [
+          {
+            "property": "transform.scaleX",
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 0
+              },
+              {
+                "time": "${60 / bpm * 0.9}",
+                "value": 1,
+                "easing": "easeOutExpo"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "// variant 2 だけの «足す 1 要素»。歌詞の後ろに輪郭だけの円を置く。": "",
+        "// 足すのは形であって色ではない（色相を増やすとまとまりが壊れる）。": "",
+        "when": "${mod(floor(variant) - 1, 3) == 1}",
+        "id": "${_id}-ring",
+        "type": "shape",
+        "shape": {
+          "type": "circle",
+          "radius": "${size * 1.45}",
+          "stroke": {
+            "color": "${second}",
+            "width": "${max(2, size * 0.035)}"
+          }
+        },
+        "transform": {
+          "x": "${centerX + width * 0.06}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.55,
+          "scale": {
+            "expression": "0.97 + beatPulse(bpm, 4, 6) * 0.06"
+          }
+        }
+      },
+      {
+        "// 人物の原寸を測る控え（背景と同じ理由）。": "",
+        "when": "${figureAsset}",
+        "id": "${_id}-figure-probe",
+        "type": "image",
+        "asset": "${figureAsset}",
+        "transform": {
+          "x": "${-width * 4}",
+          "y": "${-height * 4}",
+          "opacity": 0
+        }
+      },
+      {
+        "// 人物。«画面の高さの 72%» に揃える。1:1 でも 1:3.6 でも同じ背丈になる。": "",
+        "// variant 2 は左右を入れ替える。«反転する» のいちばん効く場所。": "",
+        "when": "${figureAsset}",
+        "id": "${_id}-figure",
+        "type": "image",
+        "asset": "${figureAsset}",
+        "// 基準点を足元（anchorY: 1）に置いて画面下へ着地させる。中心基準だと": "",
+        "// 縦横比の違う素材で «浮いている人» と «沈んだ人» が混ざる。": "",
+        "transform": {
+          "x": "${mod(floor(variant) - 1, 3) == 1 ? width * 0.26 : width * 0.74}",
+          "y": "${height * 0.99}",
+          "anchorX": 0.5,
+          "anchorY": 1,
+          "scale": {
+            "expression": "${height * 0.78} / max(1, layer('${_id}-figure-probe').height) * (1 + beatPulse(bpm, 2, 12) * 0.022)"
+          }
+        },
+        "use": [
+          {
+            "animation": "rise-in",
+            "with": {
+              "distance": 26,
+              "duration": 0.45
+            }
+          }
+        ]
+      },
+      {
+        "// 座布団。歌詞の «後ろだけ» を地の色で沈める。明るい素材を渡されたときに": "",
+        "// 白い文字が消えるのを防ぐ 3 重の対策の 1 枚目（あと 2 枚は縁取りと影）。": "",
+        "// 色は background なので、呼ぶ側が color と対で選んだ «反対側» に自動で転ぶ。": "",
+        "// 放射グラデーションの乗算にしてあるので、ぼかしのパスが 1 つも増えない。": "",
+        "// **歌詞と同じ時間だけ出す。** 画面いっぱいの楕円を出しっぱなしにしたら、": "",
+        "// 歌詞が出ていない小節が «暗い楕円だけ» の画になって、いちばん盛り上がる": "",
+        "// はずの大サビがいちばん地味になった。座布団は文字の下敷きであって、": "",
+        "// 画面を沈める道具ではない。": "",
+        "repeat": {
+          "over": "${lines}",
+          "as": "line",
+          "indexAs": "i"
+        },
+        "// 楕円ではなく «画面幅いっぱいの帯 × 縦方向のグラデーション» にする。": "",
+        "// 楕円だと縁が閉じた線として見え、写真の上に灰色の卵が浮く。": "",
+        "// 左右を画面外まで伸ばせば、見えるのは «上下にぼけた影» だけになる。": "",
+        "id": "${_id}-mat-${i}",
+        "type": "shape",
+        "start": "${lyricAt(line, i * cut * 60 / bpm * 4)}",
+        "end": "${lyricAt(line, i * cut * 60 / bpm * 4) + lyricFor(line, cut * 60 / bpm * 4)}",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width * 1.04}",
+          "height": "${size * 2.8}",
+          "fill": {
+            "type": "linear",
+            "angle": 90,
+            "stops": [
+              {
+                "offset": 0,
+                "color": "#ffffff"
+              },
+              {
+                "offset": 0.5,
+                "color": "${background}"
+              },
+              {
+                "offset": 1,
+                "color": "#ffffff"
+              }
+            ]
+          }
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY + (i % 2 == 0 ? -1 : 1) * size * 0.12}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.5
+        },
+        "blend": "multiply"
+      },
+      {
+        "// 歌詞。cut 小節ごとに 1 単語。時刻つきの行（.lrc）なら its 時刻を使う。": "",
+        "// 秒は «このシーンの中の秒»。呼ぶ側がシーン頭を 0 にして渡す約束。": "",
+        "// 縁取りは文字サイズの 7%（5〜10% を外れると字が潰れるか浮く）。": "",
+        "// variant 2 は右寄せ、variant 3 は真ん中。回転は付けない。": "",
+        "repeat": {
+          "over": "${lines}",
+          "as": "line",
+          "indexAs": "i"
+        },
+        "id": "${_id}-word-${i}",
+        "type": "text",
+        "text": "${lyricText(line)}",
+        "start": "${lyricAt(line, i * cut * 60 / bpm * 4)}",
+        "end": "${lyricAt(line, i * cut * 60 / bpm * 4) + lyricFor(line, cut * 60 / bpm * 4)}",
+        "style": {
+          "size": "${size}",
+          "color": "${color}",
+          "align": "center",
+          "weight": "bold",
+          "letterSpacing": "${size * -0.02}",
+          "// 長い行が来ても画面から出ないように、幅で自動縮小する。歌詞は曲ごとに": "",
+          "// 行の長さが変わるので «この大きさなら入る» と決め打ちできない": "",
+          "// （13 文字の行で実際に両端が切れた）。下限は 60% まで。": "",
+          "// **収まる幅は «画面幅» ではなく «中心からのずれを引いた幅»。**": "",
+          "// variant 2 は右に 6% 寄せるので、画面幅で測ると右だけはみ出す。": "",
+          "fit": {
+            "mode": "shrink",
+            "maxWidth": "${(width - 2 * abs(mod(floor(variant) - 1, 3) == 1 ? width * 0.06 : (mod(floor(variant) - 1, 3) == 2 ? 0 : -width * 0.05))) * 0.94}",
+            "minSize": 0.45
+          },
+          "// 縁は必ず second（暖色）。accent は地の草と同系色なので、縁に使うと": "",
+          "// 草の上で字が消える（実際に «草» の 1 文字が読めなくなった）。": "",
+          "// 差し色は帯と前ボケに回して、文字は «読める» 側に振る。": "",
+          "stroke": {
+            "color": "${second}",
+            "width": "${size * 0.07}"
+          },
+          "// 縁だけだと明るい絵の上で溶ける。«エッジ＋影» が鉄板の組み合わせ。": "",
+          "// 影は 50%。濃くすると文字が «貼り付いた» ように浮いて見える。": "",
+          "shadow": {
+            "color": "rgba(6,12,4,0.5)",
+            "blur": "${size * 0.09}",
+            "offsetX": 0,
+            "offsetY": "${size * 0.045}"
+          }
+        },
+        "transform": {
+          "x": "${centerX + (mod(floor(variant) - 1, 3) == 1 ? width * 0.06 : (mod(floor(variant) - 1, 3) == 2 ? 0 : -width * 0.05))}",
+          "y": "${centerY + (i % 2 == 0 ? -1 : 1) * size * 0.12}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "effects": [
+          {
+            "// 色収差は «文字だけ» に、拍のアタマだけ。全画面に掛けると": "",
+            "// «色収差でごまかした画» になるので、面積を限ってある。": "",
+            "type": "chromaticAberration",
+            "amount": {
+              "expression": "0.8 + beatPulse(bpm, 1, 14) * 4"
+            }
+          }
+        ],
+        "use": [
+          {
+            "// rise は unit: px なので «1080p のときの px» で書く。": "",
+            "// ${size} を掛けると size 側の解像度換算と二重に掛かる。": "",
+            "// 出入りは «短く・浅く»。決めゴマの前後 0.3 秒も静止画として": "",
+            "// 成立させたいので、途中のコマが «小さくて薄い塊» にならない": "",
+            "// ところまで詰めてある（0.22 秒 / 0.72 倍だと途中が汚かった）。": "",
+            "animation": "pop-in-chars",
+            "with": {
+              "stagger": 0.022,
+              "rise": 22,
+              "duration": 0.14,
+              "from": 0.88
+            }
+          },
+          {
+            "animation": "beat-bounce",
+            "with": {
+              "amount": 0.05,
+              "division": 1,
+              "decay": 15
+            }
+          }
+        ]
+      },
+      {
+        "// 前ボケ。最小の手数でいちばん «奥行き» が出る 1 枚。": "",
+        "// 帯にしてはいけない。ぼかしても上辺が直線として残り、写真の上では": "",
+        "// «地平線» に化ける。画面の隅から半分はみ出した楕円にするのが正解。": "",
+        "// 中心 accent → 縁 黒 の放射グラデーションをスクリーンで乗せると、": "",
+        "// 黒い側が素通しになって «自然にぼけた玉» になる。blur を 1 枚も使わない": "",
+        "// ので、全画面ぼかしのパスが増えない（ここは実測で効いた）。": "",
+        "id": "${_id}-bokeh",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": "${height * 0.86}",
+          "height": "${height * 0.62}",
+          "fill": {
+            "type": "radial",
+            "radius": 0.5,
+            "stops": [
+              {
+                "offset": 0,
+                "color": "${accent}"
+              },
+              {
+                "offset": 1,
+                "color": "#000000"
+              }
+            ]
+          }
+        },
+        "transform": {
+          "x": "${width * 0.09}",
+          "y": "${height * 1.02}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.28
+        },
+        "blend": "screen",
+        "use": [
+          {
+            "// px/秒。unit: px の入力なので解像度は勝手に付いてくる。": "",
+            "animation": "drift",
+            "with": {
+              "speedX": 22,
+              "speedY": -4
+            }
+          }
+        ]
+      },
+      {
+        "// 仕上げ。ここで «全画面に効くもの» を 1 回にまとめる。": "",
+        "// ブルームは半径違いを 2 枚（1 枚だと安く見える）、彩度はここで開く。": "",
+        "// グレインとビネットは «見えない層» なので薄く常時。数には数えない。": "",
+        "id": "${_id}-grade",
+        "type": "frameBuffer",
+        "frameBuffer": {
+          "source": "below",
+          "clear": true
+        },
+        "// 取り込んだフレームは «画面と同じ大きさの 1 枚» なので、基準点を左上に": "",
+        "// 置いて (0,0) に戻す。既定の中央基準のままだと半分ずれて描かれる。": "",
+        "transform": {
+          "x": 0,
+          "y": 0,
+          "anchorX": 0,
+          "anchorY": 0
+        },
+        "effects": [
+          {
+            "// 広い半径・弱い量。画面全体の «空気» を作る側。": "",
+            "// しきい値を下げすぎると草原がまるごと霞んで «霧» になる。": "",
+            "// 半径は描画時間に直接効く（ぼかしは縦横 3 パスずつ）。0.05 から": "",
+            "// 0.028 に落としたら 1 フレームが 4.2 秒 → 2.3 秒になった。": "",
+            "// 見た目の «空気» は intensity でほぼ取り返せる。": "",
+            "type": "bloom",
+            "threshold": 0.76,
+            "radius": "${max(8, height * 0.028)}",
+            "intensity": 0.18
+          },
+          {
+            "// 狭い半径・強めの量。文字の縁が «光っている» と分かる側。": "",
+            "type": "bloom",
+            "threshold": 0.86,
+            "radius": "${max(2, height * 0.008)}",
+            "intensity": 0.3
+          },
+          {
+            "// 彩度を開くのはここ。イントロが低彩度なぶん落差になる。": "",
+            "// 増減量なので 0.2 は «20% 増し»（1.0 は白飛びする）。": "",
+            "type": "colorAdjust",
+            "saturation": 0.2,
+            "contrast": 0.1,
+            "brightness": -0.02
+          },
+          {
+            "type": "noise",
+            "amount": 0.055,
+            "monochrome": true
+          },
+          {
+            "type": "vignette",
+            "amount": 0.34,
+            "radius": 0.62,
+            "softness": 0.5
+          }
+        ]
+      }
+    ]
+  }
+}

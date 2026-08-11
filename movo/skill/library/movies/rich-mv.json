@@ -1,0 +1,335 @@
+{
+  "skill": {
+    "name": "rich-mv",
+    "kind": "movie",
+    "title": "リッチな歌詞 MV 1 本",
+    "description": "静かに入り、サビで開き、谷で落として、大サビで返す。MV 制作記事 58 本の定石を型にした «盛った» 歌詞 MV の骨格。",
+    "category": "lyric",
+    "tags": [
+      "MV",
+      "歌詞",
+      "リッチ",
+      "ムービー"
+    ],
+    "learnedFrom": [
+      "https://omniweb.jp/m124/",
+      "https://ukkah.hatenadiary.org/entry/20141105/p1",
+      "https://note.com/sasakiyusuke/n/nfed111bd8be2",
+      "https://saraemi.com/1808animeidea/",
+      "https://eizou-world.com/how-to-use-color-motiongraphics/",
+      "https://note.com/ripe_stork4178/n/nc2c904835ba5"
+    ]
+  },
+  "inputs": {
+    "title": {
+      "type": "text",
+      "label": "曲名",
+      "default": "無題"
+    },
+    "subtitle": {
+      "type": "text",
+      "label": "副題・作者名",
+      "default": ""
+    },
+    "credit": {
+      "type": "text",
+      "label": "クレジット",
+      "default": "movie : Movo"
+    },
+    "bpm": {
+      "type": "number",
+      "label": "BPM",
+      "default": 148,
+      "min": 40,
+      "max": 300
+    },
+    "verseLines": {
+      "type": "textList",
+      "label": "A メロの歌詞（読ませる側）",
+      "default": [
+        "歩いてた道の先に",
+        "見上げる大きな影"
+      ]
+    },
+    "chorusLines": {
+      "type": "textList",
+      "label": "サビの歌詞（見せる側）",
+      "default": [
+        "木だと思ったけど 草だった",
+        "立派に見えたけど それは草"
+      ]
+    },
+    "bridgeLines": {
+      "type": "textList",
+      "label": "落ちサビの歌詞（1 行だけ大きく）",
+      "default": [
+        "木のような草でも"
+      ]
+    },
+    "introBars": {
+      "type": "number",
+      "label": "イントロの小節数",
+      "default": 3,
+      "min": 0.5,
+      "max": 64
+    },
+    "verseBars": {
+      "type": "number",
+      "label": "A メロの小節数",
+      "default": 10,
+      "min": 0.5,
+      "max": 64
+    },
+    "chorusBars": {
+      "type": "number",
+      "label": "サビの小節数",
+      "default": 8,
+      "min": 0.5,
+      "max": 64
+    },
+    "burstBars": {
+      "type": "number",
+      "label": "天丼崩しの小節数",
+      "default": 2,
+      "min": 0.5,
+      "max": 16
+    },
+    "bridgeBars": {
+      "type": "number",
+      "label": "落ちサビ（谷）の小節数",
+      "default": 3,
+      "min": 0.5,
+      "max": 64
+    },
+    "outroBars": {
+      "type": "number",
+      "label": "アウトロの小節数",
+      "default": 3,
+      "min": 0.5,
+      "max": 64
+    },
+    // 色は 3 色まで。ベース 70% / メイン 25% / アクセント 5% が定石です。
+    // ここは «文字列キー形式» ではなく JSONC のコメントで書きます。
+    // inputs の中に "// ...": "" と書くと **入力として登録されてしまいます**。
+    "background": {
+      "type": "color",
+      "label": "ベース（70%）",
+      "default": "#0e1512"
+    },
+    "color": {
+      "type": "color",
+      "label": "メイン＝文字色（25%）",
+      "default": "#f2f4ee"
+    },
+    "accent": {
+      "type": "color",
+      "label": "アクセント（5%）",
+      "default": "#8fd14f"
+    },
+    "second": {
+      "type": "color",
+      "label": "もう 1 色（差し）",
+      "default": "#f2b705"
+    },
+    "artAsset": {
+      "type": "text",
+      "label": "背景に敷く画像の素材名",
+      "default": "art"
+    },
+    "figureAsset": {
+      "type": "text",
+      "label": "人物画像の素材名",
+      "default": "figure"
+    },
+    "titleSize": {
+      "type": "number",
+      "label": "曲名の大きさ",
+      "default": 96,
+      "min": 8
+    },
+    "verseSize": {
+      "type": "number",
+      "label": "A メロの歌詞の大きさ",
+      "default": 46,
+      "min": 8
+    },
+    "chorusSize": {
+      "type": "number",
+      "label": "サビの歌詞の大きさ",
+      "default": 92,
+      "min": 8
+    },
+    "bridgeSize": {
+      "type": "number",
+      "label": "落ちサビの歌詞の大きさ",
+      "default": 72,
+      "min": 8
+    }
+  },
+  "video": {
+    "width": 1280,
+    "height": 720,
+    "fps": 24,
+    "background": "#0e1512"
+  },
+  "project": {
+    "bpm": 148,
+    "seed": 20260728
+  },
+  "// 並びの根拠": [
+    "調査 58 本から取った定石を、そのまま順番にしています。",
+    "",
+    "1. イントロは «掴む»。0 秒から絵を出す。彩度は落としておく（あとで解放するため）",
+    "2. A メロは «読ませる»。カットを 2 小節に伸ばし、歌詞をフレーズ単位で固定位置に",
+    "3. サビ 1 は «基準形の提示»。ここで彩度を解放し、歌詞を単語単位に切り替える",
+    "4. A メロ 2 は variant 2 で見え方を変える（同じ絵を続けると必ず飽きる）",
+    "5. サビ 2 は variant 2。«要素を 1 つ足す» 側の変化",
+    "6. 天丼崩し。サビが何度も来る曲では «1 回だけ全然違うこと» をするのが定石",
+    "7. 谷（落ちサビ）。**大サビの高さはここの低さで決まります。** 要素を引く",
+    "8. 大サビは variant 3 で «要素を 1 つ抜く» 側の変化。カットを詰める",
+    "9. アウトロは動きをゼロに。イントロと同じ位置に曲名を戻すと «帰ってきた» 感が出る"
+  ],
+  "sequence": [
+    {
+      "scene": "rich-intro",
+      "with": {
+        "title": "${title}",
+        "subtitle": "${subtitle}",
+        "bars": "${introBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "size": "${titleSize}",
+        "artAsset": "${artAsset}",
+        "figureAsset": "${figureAsset}"
+      }
+    },
+    {
+      "scene": "rich-verse",
+      "with": {
+        "lines": "${verseLines}",
+        "bars": "${verseBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "size": "${verseSize}",
+        "artAsset": "${artAsset}",
+        "figureAsset": "${figureAsset}",
+        "variant": 1
+      }
+    },
+    {
+      "scene": "rich-chorus",
+      "with": {
+        "lines": "${chorusLines}",
+        "bars": "${chorusBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "second": "${second}",
+        "size": "${chorusSize}",
+        "artAsset": "${artAsset}",
+        "figureAsset": "${figureAsset}",
+        "variant": 1,
+        "cut": 1
+      }
+    },
+    {
+      "scene": "rich-verse",
+      "with": {
+        "lines": "${verseLines}",
+        "bars": "${verseBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "size": "${verseSize}",
+        "artAsset": "${artAsset}",
+        "figureAsset": "${figureAsset}",
+        "variant": 2
+      }
+    },
+    {
+      "scene": "rich-chorus",
+      "with": {
+        "lines": "${chorusLines}",
+        "bars": "${chorusBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "second": "${second}",
+        "size": "${chorusSize}",
+        "artAsset": "${artAsset}",
+        "figureAsset": "${figureAsset}",
+        "variant": 2,
+        "cut": 1
+      }
+    },
+    {
+      "scene": "rich-burst",
+      "with": {
+        "lines": "${chorusLines}",
+        "bars": "${burstBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "second": "${second}",
+        "size": "${chorusSize}",
+        "artAsset": "${artAsset}",
+        "figureAsset": "${figureAsset}",
+        "variant": 1,
+        "cut": 0.5
+      }
+    },
+    {
+      "scene": "rich-bridge",
+      "with": {
+        "lines": "${bridgeLines}",
+        "bars": "${bridgeBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "size": "${bridgeSize}",
+        "artAsset": "${artAsset}",
+        "figureAsset": "${figureAsset}",
+        "variant": 1
+      }
+    },
+    {
+      "scene": "rich-chorus",
+      "with": {
+        "lines": "${chorusLines}",
+        "bars": "${chorusBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "second": "${second}",
+        "size": "${chorusSize}",
+        "artAsset": "${artAsset}",
+        "figureAsset": "${figureAsset}",
+        "variant": 3,
+        "cut": 0.5
+      }
+    },
+    {
+      "scene": "rich-outro",
+      "with": {
+        "title": "${title}",
+        "credit": "${credit}",
+        "bars": "${outroBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "size": "${titleSize}",
+        "artAsset": "${artAsset}",
+        "figureAsset": "${figureAsset}"
+      }
+    }
+  ],
+  "render": {
+    "quality": "standard"
+  },
+  "output": {
+    "format": "mp4",
+    "codec": "h264"
+  }
+}

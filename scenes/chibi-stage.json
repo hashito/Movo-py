@@ -1,0 +1,668 @@
+{
+  "skill": {
+    "name": "chibi-stage",
+    "kind": "scene",
+    "title": "背景写真 ＋ 動くキャラ ＋ 歌詞",
+    "description": "写真を背景にゆっくり寄せ、図形で組んだキャラを拍に合わせて動かし、時刻つきの歌詞を重ねるシーン。キャラは外部の画像を使わないので、素材が無くても «動くキャラ» が出せます。",
+    "category": "lyric",
+    "tags": [
+      "MV",
+      "歌詞",
+      "キャラクター",
+      "写真",
+      "シーン"
+    ]
+  },
+  "inputs": {
+    "lines": {
+      "type": "textList",
+      "label": "歌詞（時刻つきでも可）",
+      "default": [
+        "木だと思ったけど 草だった"
+      ]
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 8,
+      "min": 0.5,
+      "max": 64
+    },
+    "bgAsset": {
+      "type": "asset",
+      "label": "背景に敷く写真",
+      "default": ""
+    },
+    "background": {
+      "type": "color",
+      "default": "#101512"
+    },
+    "color": {
+      "type": "color",
+      "label": "文字色",
+      "default": "#f4f2ea"
+    },
+    "hair": {
+      "type": "color",
+      "label": "髪の色",
+      "default": "#5b3f2e"
+    },
+    "skin": {
+      "type": "color",
+      "label": "肌の色",
+      "default": "#ffe0c4"
+    },
+    "cloth": {
+      "type": "color",
+      "label": "服の色",
+      "default": "#3f6fd8"
+    },
+    "size": {
+      "type": "number",
+      "label": "文字の大きさ",
+      "default": 62,
+      "min": 8
+    },
+    "charX": {
+      "type": "number",
+      "label": "キャラの左右位置（0〜1）",
+      "default": 0.24,
+      "min": 0,
+      "max": 1
+    },
+    "energy": {
+      "type": "number",
+      "label": "動きの強さ",
+      "default": 1,
+      "min": 0,
+      "max": 3
+    },
+    "charAsset": {
+      "type": "asset",
+      "label": "キャラの画像（空なら図形で組んだキャラ）",
+      "default": ""
+    },
+    "charHeight": {
+      "type": "number",
+      "label": "キャラの高さ（画面比）",
+      "default": 0.72,
+      "min": 0.1,
+      "max": 1.5
+    },
+    "textX": {
+      "type": "number",
+      "label": "歌詞の左右位置（0〜1）",
+      "default": 0.63,
+      "min": 0,
+      "max": 1
+    },
+    "scrim": {
+      "type": "number",
+      "label": "暗幕の濃さ",
+      "default": 0.42,
+      "min": 0,
+      "max": 1
+    },
+    "textY": {
+      "type": "number",
+      "label": "歌詞の上下位置（0〜1）",
+      "default": 0.5,
+      "min": 0,
+      "max": 1
+    },
+    "charTint": {
+      "type": "color",
+      "label": "キャラに掛ける色（空なら素のまま）",
+      "default": ""
+    },
+    "charTintAmount": {
+      "type": "number",
+      "label": "その濃さ",
+      "default": 0.0,
+      "min": 0,
+      "max": 1
+    },
+    "fade": {
+      "type": "number",
+      "label": "繋ぎのフェード（秒。0 なら «切る»）",
+      "default": 0.12,
+      "min": 0,
+      "max": 2
+    },
+    "zoom": {
+      "type": "number",
+      "label": "背景を寄せる量",
+      "default": 1.18,
+      "min": 1,
+      "max": 2
+    },
+    "scrimColor": {
+      "type": "color",
+      "label": "暗幕の色（空なら地の色と同じ）",
+      "default": ""
+    },
+    "bgSaturation": {
+      "type": "number",
+      "label": "背景の彩度の増減（0 で素のまま）",
+      "default": 0,
+      "min": -1,
+      "max": 1
+    },
+    "bgContrast": {
+      "type": "number",
+      "label": "背景のコントラストの増減",
+      "default": 0,
+      "min": -1,
+      "max": 1
+    },
+    "band": {
+      "type": "number",
+      "label": "歌詞の後ろに敷く帯の高さ（画面比。0 で無し）",
+      "default": 0,
+      "min": 0,
+      "max": 1
+    },
+    "bandColor": {
+      "type": "color",
+      "label": "帯の色",
+      "default": "#ffffff"
+    }
+  },
+  "video": {
+    "width": 1280,
+    "height": 720
+  },
+  "scene": {
+    "duration": "${bars}bar",
+    "background": "${background}",
+    "transition": {
+      "type": "fade",
+      "in": "${fade}",
+      "out": "${fade}"
+    },
+    "layers": [
+      {
+        "// 背景の写真。ゆっくり寄せる（止めると «静止画に字を乗せただけ» に見える）。": "",
+        "id": "${_id}-bg",
+        "when": "${bgAsset}",
+        "type": "image",
+        "asset": "${bgAsset}",
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "width": "${width * 1.18}",
+          "height": "${height * 1.18}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "animations": [
+          {
+            "property": "transform.scale",
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 1
+              },
+              {
+                "time": "${_duration}",
+                "value": "${zoom}",
+                "easing": "linear"
+              }
+            ]
+          }
+        ],
+        "effects": [
+          {
+            "// 作風によって «写真の生々しさ» を落とします。値は増減量で 0 が素のまま": "",
+            "// （`color_adjust` は倍率ではありません）。": "",
+            "type": "colorAdjust",
+            "when": "${bgSaturation != 0 || bgContrast != 0}",
+            "saturation": "${bgSaturation}",
+            "contrast": "${bgContrast}"
+          }
+        ]
+      },
+      {
+        "// 文字を読ませるための暗幕。写真の上に白文字を置くと必ず沈みます。": "",
+        "id": "${_id}-scrim",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width}",
+          "height": "${height}",
+          "fill": "${scrimColor != '' ? scrimColor : background}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": {
+            "expression": "${scrim} * (1 - beatPulse(bpm, 1, 9) * ${0.15 * energy})"
+          }
+        }
+      },
+      {
+        "// ── キャラクター（図形だけで組む。外部の画像が要りません）──": "",
+        "//   描かない» ことが分かりました（単独のレイヤーなら描かれます）。": "",
+        "//   そのため各パーツをトップレベルに置き、«全体の上下» は各レイヤーの": "",
+        "//   y の式に同じ項を足して揃えています。": "",
+        "id": "${_id}-hair-back",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": 210,
+          "height": 250,
+          "fill": "${hair}"
+        },
+        "transform": {
+          "x": "${width * charX + (0)}",
+          "y": {
+            "expression": "${height * 0.62 + (-120)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "when": "${charAsset == ''}",
+        "// パーツはトップレベルに置き、«全体の上下» は各レイヤーの y の式に": "",
+        "// 同じ項を足して揃えます。group にまとめても動きますが（綴りは": "",
+        "// `layers`。`children` と書くと timeline が消します — 直しました）、": "",
+        "// 平らなほうが «どのパーツがどう動くか» を 1 か所で読めます。": ""
+      },
+      {
+        "id": "${_id}-leg-l",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": 44,
+          "height": 96,
+          "radius": 22,
+          "fill": "${cloth}"
+        },
+        "transform": {
+          "x": "${width * charX + (-34)}",
+          "y": {
+            "expression": "${height * 0.62 + (60)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0,
+          "rotation": {
+            "expression": "sin(time * 3.1) * ${5 * energy}"
+          }
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-leg-r",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": 44,
+          "height": 96,
+          "radius": 22,
+          "fill": "${cloth}"
+        },
+        "transform": {
+          "x": "${width * charX + (34)}",
+          "y": {
+            "expression": "${height * 0.62 + (60)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0,
+          "rotation": {
+            "expression": "sin(time * 3.1 + PI) * ${5 * energy}"
+          }
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-body",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": 150,
+          "height": 130,
+          "radius": 56,
+          "fill": "${cloth}"
+        },
+        "transform": {
+          "x": "${width * charX + (0)}",
+          "y": {
+            "expression": "${height * 0.62 + (0)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "scaleY": {
+            "expression": "1 + beatPulse(bpm, 1, 12) * ${0.06 * energy}"
+          }
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-arm-l",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": 34,
+          "height": 108,
+          "radius": 17,
+          "fill": "${cloth}"
+        },
+        "transform": {
+          "x": "${width * charX + (-74)}",
+          "y": {
+            "expression": "${height * 0.62 + (-34)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0.12,
+          "rotation": {
+            "expression": "18 + sin(time * 2.6) * ${16 * energy} + beatPulse(bpm, 1, 10) * ${12 * energy}"
+          }
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-arm-r",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": 34,
+          "height": 108,
+          "radius": 17,
+          "fill": "${cloth}"
+        },
+        "transform": {
+          "x": "${width * charX + (74)}",
+          "y": {
+            "expression": "${height * 0.62 + (-34)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0.12,
+          "rotation": {
+            "expression": "-18 - sin(time * 2.6) * ${16 * energy} - beatPulse(bpm, 1, 10) * ${12 * energy}"
+          }
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-head",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": 176,
+          "height": 168,
+          "fill": "${skin}"
+        },
+        "transform": {
+          "x": "${width * charX + (0)}",
+          "y": {
+            "expression": "${height * 0.62 + (-122)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "rotation": {
+            "expression": "sin(time * 1.7) * ${4 * energy}"
+          }
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-bang",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": 190,
+          "height": 110,
+          "fill": "${hair}"
+        },
+        "transform": {
+          "x": "${width * charX + (0)}",
+          "y": {
+            "expression": "${height * 0.62 + (-178)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "rotation": {
+            "expression": "sin(time * 1.7) * ${4 * energy}"
+          }
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-ahoge",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": 12,
+          "height": 54,
+          "radius": 6,
+          "fill": "${hair}"
+        },
+        "transform": {
+          "x": "${width * charX + (10)}",
+          "y": {
+            "expression": "${height * 0.62 + (-232)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 1,
+          "rotation": {
+            "expression": "sin(time * 5.2) * ${22 * energy}"
+          }
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-eye-l",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": 26,
+          "height": 34,
+          "fill": "#2b2b33"
+        },
+        "transform": {
+          "x": "${width * charX + (-38)}",
+          "y": {
+            "expression": "${height * 0.62 + (-120)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "// まばたき。3.4 秒ごとに 0.12 秒だけ潰す。": "",
+          "scaleY": {
+            "expression": "mod(time, 3.4) < 0.12 ? 0.12 : 1"
+          }
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-eye-r",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": 26,
+          "height": 34,
+          "fill": "#2b2b33"
+        },
+        "transform": {
+          "x": "${width * charX + (38)}",
+          "y": {
+            "expression": "${height * 0.62 + (-120)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "scaleY": {
+            "expression": "mod(time, 3.4) < 0.12 ? 0.12 : 1"
+          }
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-cheek-l",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": 30,
+          "height": 16,
+          "fill": "#ff9a9a"
+        },
+        "transform": {
+          "x": "${width * charX + (-62)}",
+          "y": {
+            "expression": "${height * 0.62 + (-96)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.65
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-cheek-r",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": 30,
+          "height": 16,
+          "fill": "#ff9a9a"
+        },
+        "transform": {
+          "x": "${width * charX + (62)}",
+          "y": {
+            "expression": "${height * 0.62 + (-96)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.65
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "id": "${_id}-mouth",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": 26,
+          "height": 20,
+          "fill": "#8c3a3a"
+        },
+        "transform": {
+          "x": "${width * charX + (0)}",
+          "y": {
+            "expression": "${height * 0.62 + (-84)} - beatPulse(bpm, 1, 9) * ${14 * energy}"
+          },
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "// 口は拍で開く。歌っているように見せるのはこれだけで足ります。": "",
+          "scaleY": {
+            "expression": "0.35 + beatPulse(bpm, 1, 7) * ${0.9 * energy}"
+          }
+        },
+        "when": "${charAsset == ''}"
+      },
+      {
+        "// 画像のキャラ。生成した一枚絵から切り出したパーツを 1 枚だけ使います。": "",
+        "// 拍で上下し、わずかに傾ぐ。歌詞に合わせてポーズごと差し替える前提なので、": "",
+        "// ここでは «1 枚をどう動かすか» だけを持ちます。": "",
+        "id": "${_id}-char-image",
+        "when": "${charAsset != ''}",
+        "type": "image",
+        "asset": "${charAsset}",
+        "transform": {
+          "x": {
+            "expression": "${width * charX} + sin(time * 1.6) * ${14 * energy}"
+          },
+          "y": {
+            "expression": "${height * 0.56} - beatPulse(bpm, 1, 8) * ${28 * energy}"
+          },
+          "height": "${height * charHeight}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "rotation": {
+            "expression": "sin(time * 1.3) * ${3.2 * energy}"
+          },
+          "scale": {
+            "expression": "1 + beatPulse(bpm, 1, 10) * ${0.075 * energy}"
+          }
+        },
+        "effects": [
+          {
+            "// 蛍光の作風では «絵» ではなく «色» で押すので、キャラも染めます。": "",
+            "type": "tint",
+            "when": "${charTint != ''}",
+            "color": "${charTint != '' ? charTint : '#ffffff'}",
+            "amount": "${charTintAmount}"
+          }
+        ]
+      },
+      {
+        "// 歌詞の後ろに敷く帯。**明暗の差を画面に作る**ためのものです。": "",
+        "// 色面だけの作風はコントラストが上がりません（実測 0.144 / 目標 0.200 以上）。": "",
+        "// 明るい帯を 1 本入れると «暗い地 ＋ 明るい帯» で広がりが出ます。": "",
+        "id": "${_id}-band",
+        "when": "${band > 0}",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width * 1.1}",
+          "height": "${height * band}",
+          "fill": "${bandColor}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${height * textY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "rotation": -1.5,
+          "opacity": {
+            "expression": "0.82 + beatPulse(bpm, 1, 10) * 0.18"
+          }
+        }
+      },
+      {
+        "// 歌詞。時刻つきなら its 時刻で、無ければ尺を等分する。": "",
+        "id": "${_id}-line-${i}",
+        "type": "text",
+        "text": "${lyricText(line)}",
+        "start": "${lyricAt(line, i * _duration / max(1, lines.length))}",
+        "end": "${lyricAt(line, i * _duration / max(1, lines.length)) + lyricFor(line, _duration / max(1, lines.length))}",
+        "style": {
+          "size": "${size}",
+          "color": "${color}",
+          "align": "center",
+          "weight": "bold",
+          "letterSpacing": "${size * 0.02}",
+          "fit": {
+            "mode": "shrink",
+            "maxWidth": "${min(textX, 1 - textX) * 2 * width * 0.92}",
+            "minSize": 0.35
+          },
+          "stroke": {
+            "color": "rgba(0,0,0,0.75)",
+            "width": "${size * 0.14}"
+          }
+        },
+        "transform": {
+          "x": "${width * textX}",
+          "y": "${height * textY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "use": [
+          {
+            "animation": "pop-in-chars",
+            "with": {
+              "stagger": 0.03,
+              "rise": "${size * 0.28}",
+              "duration": 0.2
+            }
+          }
+        ],
+        "repeat": {
+          "over": "${lines}",
+          "as": "line",
+          "indexAs": "i"
+        }
+      }
+    ]
+  }
+}

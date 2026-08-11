@@ -1,0 +1,182 @@
+{
+  "skill": {
+    "name": "lyric-mv",
+    "kind": "movie",
+    "title": "歌詞 MV 1 本",
+    "description": "イントロ→A メロ→サビ→アウトロ。入力値だけで 1 本になる歌詞 MV の骨格。",
+    "category": "lyric",
+    "tags": [
+      "MV",
+      "歌詞",
+      "ムービー"
+    ]
+  },
+  "inputs": {
+    "title": {
+      "type": "text",
+      "label": "曲名",
+      "default": "無題"
+    },
+    "subtitle": {
+      "type": "text",
+      "label": "副題・作者名",
+      "default": ""
+    },
+    "credit": {
+      "type": "text",
+      "label": "クレジット",
+      "default": "movie : Movo"
+    },
+    "bpm": {
+      "type": "number",
+      "label": "BPM",
+      "default": 150,
+      "min": 40,
+      "max": 300
+    },
+    "lines": {
+      "type": "textList",
+      "label": "A メロの歌詞（1 行ずつ）",
+      "default": [
+        "同じ顔が並んでる",
+        "どれが最初か忘れた"
+      ]
+    },
+    "hook": {
+      "type": "text",
+      "label": "サビの決め文句（空なら歌詞の 1 行目）",
+      "default": ""
+    },
+    "introBars": {
+      "type": "number",
+      "label": "イントロの小節数",
+      "default": 4,
+      "min": 0.25,
+      "max": 64
+    },
+    "verseBars": {
+      "type": "number",
+      "label": "A メロの小節数",
+      "default": 8,
+      "min": 0.25,
+      "max": 64
+    },
+    "chorusBars": {
+      "type": "number",
+      "label": "サビの小節数",
+      "default": 8,
+      "min": 0.25,
+      "max": 64
+    },
+    "outroBars": {
+      "type": "number",
+      "label": "アウトロの小節数",
+      "default": 4,
+      "min": 0.25,
+      "max": 64
+    },
+    "background": {
+      "type": "color",
+      "default": "#0a0a12"
+    },
+    "color": {
+      "type": "color",
+      "label": "文字色",
+      "default": "#f2efe8"
+    },
+    "accent": {
+      "type": "color",
+      "label": "差し色",
+      "default": "#ffd166"
+    },
+    "titleSize": {
+      "type": "number",
+      "label": "曲名の大きさ",
+      "default": 118,
+      "min": 8
+    },
+    "lyricSize": {
+      "type": "number",
+      "label": "A メロの歌詞の大きさ",
+      "default": 56,
+      "min": 8
+    },
+    "hookSize": {
+      "type": "number",
+      "label": "サビの決め文句の大きさ",
+      "default": 168,
+      "min": 8
+    },
+    "division": {
+      "type": "number",
+      "label": "サビで何拍ごとに跳ねるか",
+      "default": 1,
+      "min": 0.25,
+      "max": 8
+    }
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "background": "#0a0a12"
+  },
+  "project": {
+    "bpm": 150,
+    "seed": 20260726
+  },
+  "sequence": [
+    {
+      "scene": "mv-intro",
+      "with": {
+        "title": "${title}",
+        "subtitle": "${subtitle}",
+        "bars": "${introBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "size": "${titleSize}"
+      }
+    },
+    {
+      "scene": "mv-verse",
+      "with": {
+        "lines": "${lines}",
+        "bars": "${verseBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "size": "${lyricSize}"
+      }
+    },
+    {
+      "scene": "mv-chorus",
+      "with": {
+        "hook": "${hook != '' ? hook : lines[0]}",
+        "bars": "${chorusBars}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "size": "${hookSize}",
+        "division": "${division}",
+        "background": "${background}"
+      }
+    },
+    {
+      "scene": "mv-outro",
+      "with": {
+        "title": "${title}",
+        "credit": "${credit}",
+        "bars": "${outroBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "size": "${titleSize * 0.75}"
+      }
+    }
+  ],
+  "render": {
+    "quality": "standard"
+  },
+  "output": {
+    "format": "mp4",
+    "codec": "h264"
+  }
+}

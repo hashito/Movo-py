@@ -1,0 +1,66 @@
+{
+  "animation": {
+    "name": "wave-flag",
+    "title": "旗のように波打つ",
+    "description": "静止状態から徐々に波打ち始める。旗・リボン・帯に。",
+    "category": "loop",
+    "tags": [
+      "変形",
+      "wave"
+    ]
+  },
+  "inputs": {
+    "amplitude": {
+      "type": "number",
+      "unit": "px",
+      "default": 24
+    },
+    "frequency": {
+      "type": "number",
+      "default": 2.5,
+      "min": 0.01
+    },
+    "speed": {
+      "type": "number",
+      "default": 1.4
+    },
+    "rampUp": {
+      "type": "number",
+      "default": 1.2,
+      "label": "立ち上がり"
+    },
+    "axis": {
+      "type": "choice",
+      "options": [
+        "x",
+        "y"
+      ],
+      "default": "x"
+    }
+  },
+  "produces": {
+    "modifiers": [
+      {
+        "id": "waveFlag",
+        "type": "wave",
+        "axis": "${axis}",
+        "amplitude": {
+          "keyframes": [
+            {
+              "time": 0,
+              "value": 0
+            },
+            {
+              "time": "${rampUp}",
+              "value": "${amplitude}"
+            }
+          ]
+        },
+        "frequency": "${frequency}",
+        "phase": {
+          "expression": "time * ${speed}"
+        }
+      }
+    ]
+  }
+}

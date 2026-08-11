@@ -1,0 +1,176 @@
+{
+  "skill": {
+    "name": "counter-stat",
+    "title": "数字カウンター",
+    "description": "大きな数字が動くカードと見出し。実績や統計の提示に。",
+    "category": "overlay",
+    "tags": [
+      "カウンター",
+      "数字"
+    ],
+    "learnedFrom": [
+      "https://www.fu-non.net/aviutl/aviutl-edit-advanced/aviutl-custom-object-howto.html"
+    ]
+  },
+  "inputs": {
+    "label": {
+      "type": "text",
+      "default": "総再生数",
+      "label": "見出し"
+    },
+    "from": {
+      "type": "number",
+      "default": 0
+    },
+    "to": {
+      "type": "number",
+      "default": 12345
+    },
+    "suffix": {
+      "type": "text",
+      "default": ""
+    },
+    "separator": {
+      "type": "boolean",
+      "default": true,
+      "label": "3 桁区切り"
+    },
+    "numberColor": {
+      "type": "color",
+      "default": "#4cc9f0"
+    },
+    "labelColor": {
+      "type": "color",
+      "default": "#c9d5ff"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "default": 120,
+      "min": 8
+    },
+    "duration": {
+      "type": "number",
+      "default": 3,
+      "min": 0.2
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#0b0e16"
+  },
+  "layers": [
+    {
+      "when": "${label}",
+      "id": "${_id}-label",
+      "type": "text",
+      "text": "${label}",
+      "style": {
+        "size": "${size * 0.28}",
+        "color": "${labelColor}",
+        "align": "center"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY - size * 0.72}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "rise-in",
+          "with": {
+            "duration": 0.5,
+            "distance": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "${_id}-number",
+      "type": "text",
+      "counter": {
+        "from": "${from}",
+        "to": "${to}",
+        "suffix": "${suffix}",
+        "separator": "${separator}",
+        "easing": "easeOutExpo",
+        "progress": {
+          "keyframes": [
+            {
+              "time": 0.2,
+              "value": 0
+            },
+            {
+              "time": "${max(0.4, duration - 0.4)}",
+              "value": 1
+            }
+          ]
+        }
+      },
+      "style": {
+        "size": "${size}",
+        "color": "${numberColor}",
+        "align": "center"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "pop-in",
+          "with": {
+            "duration": 0.5,
+            "from": 0.7
+          }
+        }
+      ],
+      "effects": [
+        {
+          "type": "bloom",
+          "threshold": 0.5,
+          "radius": "${14 * scale}",
+          "intensity": 0.5
+        }
+      ]
+    },
+    {
+      "id": "${_id}-rule",
+      "type": "shape",
+      "shape": {
+        "type": "rectangle",
+        "width": "${size * 3}",
+        "height": "${max(1, 4 * scale)}",
+        "radius": "${max(1, 2 * scale)}",
+        "fill": "${numberColor}"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY + size * 0.7}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "animations": [
+        {
+          "property": "transform.scaleX",
+          "keyframes": [
+            {
+              "time": "${min(0.3, _duration * 0.1)}",
+              "value": 0
+            },
+            {
+              "time": "${min(1, _duration * 0.34)}",
+              "value": 1,
+              "easing": "easeOutCubic"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

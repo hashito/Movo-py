@@ -1,0 +1,123 @@
+{
+  "animation": {
+    "name": "blink",
+    "title": "まばたき",
+    "description": "目のある帯だけを上まぶたで塞ぐ。一枚絵を「生きている」ように見せる限定作画。",
+    "category": "loop",
+    "tags": [
+      "一枚絵",
+      "限定作画",
+      "キャラクター"
+    ]
+  },
+  "inputs": {
+    "region": {
+      "type": "list",
+      "label": "目のある範囲 [x, y, 幅, 高さ]（素材に対する比率・左上基準）",
+      "default": [
+        0.36,
+        0.4,
+        0.28,
+        0.06
+      ]
+    },
+    "interval": {
+      "type": "number",
+      "label": "平均間隔（秒）",
+      "default": 5,
+      "min": 0.5,
+      "max": 60
+    },
+    "jitter": {
+      "type": "number",
+      "label": "間隔の揺らぎ（秒）",
+      "default": 2.5,
+      "min": 0
+    },
+    "duration": {
+      "type": "number",
+      "label": "閉じてから開くまで（秒）",
+      "default": 0.16,
+      "min": 0.04,
+      "max": 2
+    },
+    "phase": {
+      "type": "number",
+      "label": "個体差（同じ画面の別人とずらす）",
+      "default": 0
+    },
+    "color": {
+      "type": "color",
+      "label": "まぶたの色（帯の上端の色に寄せる）",
+      "default": "#f3d9c6"
+    },
+    "lash": {
+      "type": "number",
+      "label": "まつげの線の濃さ（0 で無し）",
+      "default": 0.55,
+      "min": 0,
+      "max": 1
+    },
+    "lashColor": {
+      "type": "color",
+      "label": "まつげの色",
+      "default": "#2a1d18"
+    },
+    "softness": {
+      "type": "number",
+      "label": "境目のぼかし（比率）",
+      "default": 0.02,
+      "min": 0,
+      "max": 0.5
+    },
+    "tilt": {
+      "type": "number",
+      "label": "目の並びの傾き（度・顔が傾いている絵で使う）",
+      "default": 0,
+      "min": -45,
+      "max": 45
+    }
+  },
+  "produces": {
+    "effects": [
+      {
+        "id": "${_name}-lid",
+        "type": "tint",
+        "color": "${color}",
+        "amount": 1,
+        "mask": {
+          "type": "rectangle",
+          "x": "${region[0] * 1 + region[2] * 0.5}",
+          "width": "${region[2] * 1}",
+          "y": {
+            "expression": "${region[1] * 1} + ${region[3] * 0.5} * (max(max(clamp(min((time - ((round(time / ${interval}) + (-1)) * ${interval} + (hashRandom((round(time / ${interval}) + (-1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (-1)) * ${interval} + (hashRandom((round(time / ${interval}) + (-1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1), clamp(min((time - ((round(time / ${interval}) + (0)) * ${interval} + (hashRandom((round(time / ${interval}) + (0) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (0)) * ${interval} + (hashRandom((round(time / ${interval}) + (0) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1)), clamp(min((time - ((round(time / ${interval}) + (1)) * ${interval} + (hashRandom((round(time / ${interval}) + (1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (1)) * ${interval} + (hashRandom((round(time / ${interval}) + (1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1)))"
+          },
+          "height": {
+            "expression": "${region[3] * 1} * (max(max(clamp(min((time - ((round(time / ${interval}) + (-1)) * ${interval} + (hashRandom((round(time / ${interval}) + (-1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (-1)) * ${interval} + (hashRandom((round(time / ${interval}) + (-1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1), clamp(min((time - ((round(time / ${interval}) + (0)) * ${interval} + (hashRandom((round(time / ${interval}) + (0) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (0)) * ${interval} + (hashRandom((round(time / ${interval}) + (0) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1)), clamp(min((time - ((round(time / ${interval}) + (1)) * ${interval} + (hashRandom((round(time / ${interval}) + (1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (1)) * ${interval} + (hashRandom((round(time / ${interval}) + (1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1)))"
+          },
+          "feather": "${softness}",
+          "rotation": "${tilt}"
+        }
+      },
+      {
+        "id": "${_name}-lash",
+        "type": "tint",
+        "color": "${lashColor}",
+        "amount": 1,
+        "mask": {
+          "type": "rectangle",
+          "x": "${region[0] * 1 + region[2] * 0.5}",
+          "width": "${region[2] * 1}",
+          "y": {
+            "expression": "${region[1] * 1} + ${region[3] * 1} * (-0.09 + max(max(clamp(min((time - ((round(time / ${interval}) + (-1)) * ${interval} + (hashRandom((round(time / ${interval}) + (-1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (-1)) * ${interval} + (hashRandom((round(time / ${interval}) + (-1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1), clamp(min((time - ((round(time / ${interval}) + (0)) * ${interval} + (hashRandom((round(time / ${interval}) + (0) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (0)) * ${interval} + (hashRandom((round(time / ${interval}) + (0) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1)), clamp(min((time - ((round(time / ${interval}) + (1)) * ${interval} + (hashRandom((round(time / ${interval}) + (1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (1)) * ${interval} + (hashRandom((round(time / ${interval}) + (1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1)))"
+          },
+          "height": "${region[3] * 0.2}",
+          "opacity": {
+            "expression": "${lash} * (max(max(clamp(min((time - ((round(time / ${interval}) + (-1)) * ${interval} + (hashRandom((round(time / ${interval}) + (-1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (-1)) * ${interval} + (hashRandom((round(time / ${interval}) + (-1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1), clamp(min((time - ((round(time / ${interval}) + (0)) * ${interval} + (hashRandom((round(time / ${interval}) + (0) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (0)) * ${interval} + (hashRandom((round(time / ${interval}) + (0) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1)), clamp(min((time - ((round(time / ${interval}) + (1)) * ${interval} + (hashRandom((round(time / ${interval}) + (1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2})) / ${duration * 0.3}, (((round(time / ${interval}) + (1)) * ${interval} + (hashRandom((round(time / ${interval}) + (1) + ${phase}) * 7919 + 13) - 0.5) * ${jitter * 2}) + ${duration} - time) / ${duration * 0.3}), 0, 1)))"
+          },
+          "rotation": "${tilt}"
+        }
+      }
+    ]
+  }
+}

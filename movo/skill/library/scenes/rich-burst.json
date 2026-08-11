@@ -1,0 +1,406 @@
+{
+  "skill": {
+    "name": "rich-burst",
+    "kind": "scene",
+    "title": "天丼崩し（1 回だけ全然違うことをする 2 小節）",
+    "description": "サビなのにカット密度を最大まで上げ、色を 1 色に振り切って 2 小節で駆け抜ける。歌詞は 1 文字ずつ。同じサビが何度も来る曲で «1 回だけ» 差すための枠。既定は 2 小節。",
+    "category": "lyric",
+    "tags": [
+      "MV",
+      "サビ",
+      "高速",
+      "モノクロ",
+      "シーン"
+    ],
+    "learnedFrom": [
+      "docs/mv-effects-research.ja.md",
+      "docs/vocaloid-mv-study.ja.md"
+    ]
+  },
+  "// 設計のはなし": [
+    "1. これは «崩し» なので、rich-chorus と系統をそろえない。そろえた瞬間に",
+    "   «ただの短いサビ» になって、1 回だけ差す意味が消える。",
+    "2. 色数はいちばん少ない。地と振り切り先の 2 色だけを duotone で作り、",
+    "   仕上げの上に置いた細い second の帯だけが «唯一残る色» になる。",
+    "   派手さは色数ではなくカット密度で出す、という割り切り。",
+    "3. ネガ反転は 2 拍に 1 回だけ。148 BPM で 1 拍ごとに反転すると",
+    "   毎秒 1.2 回の閃光になり、上限 3 回に対して余裕が無くなる。",
+    "   2 拍なら毎秒 0.6 回で、しかも «拍で切れている» ことは十分伝わる。",
+    "4. 歌詞は textAnimator の character 単位。stagger を詰めて 1 文字ずつ",
+    "   叩き込む。文字は動かすが回さない（回すと途中のコマが読めなくなる）。",
+    "5. 全画面に効くピクセル処理は art の 1 個と grade の 5 個まで。"
+  ],
+  "inputs": {
+    "lines": {
+      "type": "textList",
+      "label": "歌詞（1 要素 = 1 カット。1 文字ずつ叩き込まれる）",
+      "default": [
+        "木",
+        "みたいな",
+        "草",
+        "だった",
+        "ぜんぶ",
+        "うそ",
+        "みたいに",
+        "はれた"
+      ]
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 2,
+      "min": 0.25,
+      "max": 32
+    },
+    "bpm": {
+      "type": "number",
+      "label": "BPM",
+      "default": 148,
+      "min": 20,
+      "max": 400
+    },
+    "background": {
+      "type": "color",
+      "label": "地の色（振り切ったときの «影» 側）",
+      "default": "#0b1206"
+    },
+    "color": {
+      "type": "color",
+      "label": "文字色",
+      "default": "#ffffff"
+    },
+    "accent": {
+      "type": "color",
+      "label": "振り切る先の 1 色（duotone の «光» 側）",
+      "default": "#c8f04a"
+    },
+    "second": {
+      "type": "color",
+      "label": "仕上げの上に残す唯一の色（カウンターの帯）",
+      "default": "#ff8f4d"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "label": "歌詞の大きさ",
+      "default": 300,
+      "min": 24
+    },
+    "artAsset": {
+      "type": "asset",
+      "label": "背景の絵（宣言済みの素材名）",
+      "default": ""
+    },
+    "figureAsset": {
+      "type": "asset",
+      "label": "人物・立ち絵（宣言済みの素材名）",
+      "default": ""
+    },
+    "variant": {
+      "type": "number",
+      "label": "振り切り先（1 accent / 2 白黒・反転なし / 3 抜く。4 以降は巡回）",
+      "default": 1,
+      "min": 1,
+      "max": 64
+    },
+    "cut": {
+      "type": "number",
+      "label": "カット単位（小節）。0.25 = 1 拍。既定はいちばん詰めた 1 拍",
+      "default": 0.25,
+      "min": 0.0625,
+      "max": 2
+    }
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+  "responsiveTime": {
+    "// 頭の «バンッ» は尺で伸び縮みさせない。ここが緩むと崩しに聞こえない。": "",
+    "in": "1/2beat"
+  },
+  "scene": {
+    "duration": "${bars}bar",
+    "background": "${background}",
+    "transition": {
+      "type": "fade",
+      "in": 0.03,
+      "out": 0.06
+    },
+    "layers": [
+      {
+        "// 地。ここは «べた» で良い。階調は grade の duotone が作る。": "",
+        "id": "${_id}-base",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width}",
+          "height": "${height}",
+          "fill": "${background}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        }
+      },
+      {
+        "// 素材の原寸を測るためだけの控え。画面の外・不透明度 0 なので描かれない。": "",
+        "// transform に width と height を両方書くと素材が潰れる（1:1 も 1:3.6 も": "",
+        "// 来る）ので、縦横比を保ったまま覆うには倍率で指定するしかない。": "",
+        "when": "${artAsset != '' && mod(floor(variant) - 1, 3) != 2}",
+        "id": "${_id}-art-probe",
+        "type": "image",
+        "asset": "${artAsset}",
+        "transform": {
+          "x": "${-width * 4}",
+          "y": "${-height * 4}",
+          "opacity": 0
+        }
+      },
+      {
+        "// 背景の絵。variant 3 では «抜く»（地と文字だけになる）。": "",
+        "// 幅と高さの大きいほうに合わせるので、どんな比率でも必ず画面を覆う。": "",
+        "// 走査線ごとの横ずれをカットのアタマだけ入れる。": "",
+        "when": "${artAsset != '' && mod(floor(variant) - 1, 3) != 2}",
+        "id": "${_id}-art",
+        "type": "image",
+        "asset": "${artAsset}",
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "scale": {
+            "expression": "max(${width} / max(1, layer('${_id}-art-probe').width), ${height} / max(1, layer('${_id}-art-probe').height)) * (1.04 + beatPulse(bpm, ${max(0.5, cut * 4)}, 9) * 0.06)"
+          }
+        },
+        "effects": [
+          {
+            "// axis は書かない。既定が横ずれで、スキーマの axis は x/y/both しか": "",
+            "// 通さないのに rasterScroll の実装は vertical を見る（食い違っている）。": "",
+            "type": "rasterScroll",
+            "amplitude": {
+              "expression": "beatPulse(bpm, ${max(0.5, cut * 4)}, 11) * ${max(6, height * 0.022)}"
+            },
+            "frequency": 7,
+            "speed": 2.4,
+            "random": 0.45
+          }
+        ]
+      },
+      {
+        "// 人物の原寸を測る控え（背景と同じ理由）。": "",
+        "when": "${figureAsset != '' && mod(floor(variant) - 1, 3) != 2}",
+        "id": "${_id}-figure-probe",
+        "type": "image",
+        "asset": "${figureAsset}",
+        "transform": {
+          "x": "${-width * 4}",
+          "y": "${-height * 4}",
+          "opacity": 0
+        }
+      },
+      {
+        "// 人物。«画面の高さの 80%» に揃える。どんな縦横比でも同じ背丈になる。": "",
+        "// カットのアタマで «ドン» と入る。ここも回さずスケールだけ。": "",
+        "when": "${figureAsset != '' && mod(floor(variant) - 1, 3) != 2}",
+        "id": "${_id}-figure",
+        "type": "image",
+        "asset": "${figureAsset}",
+        "transform": {
+          "x": "${centerX}",
+          "y": "${height * 0.6}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.9,
+          "scale": {
+            "expression": "${height * 0.8} / max(1, layer('${_id}-figure-probe').height) * (1.02 + beatPulse(bpm, ${max(0.5, cut * 4)}, 10) * 0.05)"
+          }
+        }
+      },
+      {
+        "// 集中線。密度も本数も rich-chorus より上。ここは振り切って良い。": "",
+        "// variant 3 では抜く。抜くと «文字だけが殴ってくる» 画になる。": "",
+        "when": "${mod(floor(variant) - 1, 3) != 2}",
+        "id": "${_id}-lines",
+        "type": "speedLines",
+        "speedLines": {
+          "count": 200,
+          "style": "taperInner",
+          "thickness": "${max(1, size * 0.009)}",
+          "color": "${color}",
+          "density": 0.62,
+          "innerRadius": {
+            "expression": "0.3 + beatPulse(bpm, ${max(0.5, cut * 4)}, 12) * 0.34"
+          },
+          "outerRadius": 1.7,
+          "jitter": 0.85,
+          "speed": 0.4,
+          "seed": 17
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "width": "${width}",
+          "height": "${height}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.5
+        }
+      },
+      {
+        "// 歌詞。cut 小節ごとに 1 カット、その中を 1 文字ずつ叩き込む。": "",
+        "// stagger 0.012 秒は «ほぼ同時に見えるが、確かに順に来る» 境目。": "",
+        "// 位置はカットごとに大きく振る。密度そのものが演出なので、": "",
+        "// 真ん中に置き続けると «速いだけの画» になる。": "",
+        "repeat": {
+          "over": "${lines}",
+          "as": "line",
+          "indexAs": "i"
+        },
+        "id": "${_id}-hit-${i}",
+        "type": "text",
+        "text": "${lyricText(line)}",
+        "start": "${lyricAt(line, i * cut * 60 / bpm * 4)}",
+        "end": "${lyricAt(line, i * cut * 60 / bpm * 4) + lyricFor(line, cut * 60 / bpm * 4)}",
+        "style": {
+          "size": "${size * (i % 3 == 1 ? 0.62 : 1)}",
+          "color": "${color}",
+          "align": "center",
+          "weight": "bold",
+          "letterSpacing": "${size * -0.04}",
+          "// 長い行でも画面から出さない。ここは文字が大きいぶん外に出やすい。": "",
+          "// **収まる幅は «画面幅» ではなく «左右に振ったぶんを引いた幅»。**": "",
+          "// 画面幅で測ると、いちばん外へ振ったカットだけ端が切れる（実際に切れた）。": "",
+          "fit": {
+            "mode": "shrink",
+            "maxWidth": "${(width - 2 * abs((i % 4 - 1.5) * width * 0.09)) * 0.94}",
+            "minSize": 0.25
+          },
+          "// 縁は必ず地の色。duotone は «明るさ» を色に置き換えるので、明るい色で": "",
+          "// 縁取ると塗りと同じ明るさになって輪郭が消える（accent で縁取ったら": "",
+          "// 実際に文字が背景に溶けた）。暗い縁は反転しても «影» 側に残る。": "",
+          "stroke": {
+            "color": "${background}",
+            "width": "${size * 0.06}"
+          },
+          "// 縁だけだと反転したコマで溶ける。エッジ＋影の鉄板を守る。": "",
+          "shadow": {
+            "color": "rgba(0,0,0,0.5)",
+            "blur": "${size * 0.07}",
+            "offsetX": 0,
+            "offsetY": "${size * 0.03}"
+          }
+        },
+        "transform": {
+          "x": "${centerX + (i % 4 - 1.5) * width * 0.09}",
+          "y": "${centerY + (i % 3 - 1) * height * 0.17}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "textAnimator": {
+          "unit": "character",
+          "order": "forward",
+          "stagger": 0.012,
+          "duration": 0.09,
+          "easing": "easeOutQuad",
+          "from": {
+            "opacity": 0,
+            "scale": 1.9
+          }
+        }
+      },
+      {
+        "// 仕上げ。ここで «1 色に振り切る»。": "",
+        "//   posterize  階調を落として «版» にする": "",
+        "//   duotone    影 = 地の色、光 = 振り切り先の 1 色（variant 2 は白）": "",
+        "//   invert     2 拍に 1 回だけネガ反転（毎秒 0.6 回。上限は 3 回）": "",
+        "//   noise      粒。5〜20% の下寄り": "",
+        "//   vignette   «見えない層»。四隅を締めるだけ": "",
+        "id": "${_id}-grade",
+        "type": "frameBuffer",
+        "frameBuffer": {
+          "source": "below",
+          "clear": true
+        },
+        "// 取り込んだフレームは «画面と同じ大きさの 1 枚»。基準点を左上に置いて": "",
+        "// (0,0) に戻さないと、既定の中央基準で半分ずれて描かれる。": "",
+        "transform": {
+          "x": 0,
+          "y": 0,
+          "anchorX": 0,
+          "anchorY": 0
+        },
+        "effects": [
+          {
+            "type": "posterize",
+            "levels": 5
+          },
+          {
+            "type": "duotone",
+            "shadow": "${background}",
+            "highlight": "${mod(floor(variant) - 1, 3) == 1 ? color : accent}",
+            "amount": 1
+          },
+          {
+            "// variant 2 だけ反転を止める（白黒に振り切る側は反転しない）。": "",
+            "// 反転の刻みは cut に付いてくるが、2 拍より速くはしない。": "",
+            "type": "invert",
+            "amount": {
+              "expression": "${mod(floor(variant) - 1, 3) == 1 ? 0 : 1} * (mod(beatIndex(${max(2, cut * 4)}), 2) < 1 ? 0 : 1)"
+            }
+          },
+          {
+            "type": "noise",
+            "amount": 0.075,
+            "monochrome": true
+          },
+          {
+            "type": "vignette",
+            "amount": 0.42,
+            "radius": 0.52,
+            "softness": 0.5
+          }
+        ]
+      },
+      {
+        "// 仕上げの «上» に置くので、ここだけ duotone にもネガにも染まらない。": "",
+        "// 画面じゅうが 1 色に振り切られている中で、唯一の別の色になる。": "",
+        "// 2 小節をどこまで走ったかのカウンターでもある。": "",
+        "id": "${_id}-mark",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width}",
+          "height": "${max(3, height * 0.012)}",
+          "fill": "${second}"
+        },
+        "transform": {
+          "x": 0,
+          "y": "${height * 0.955}",
+          "anchorX": 0,
+          "anchorY": 0.5,
+          "scaleX": 0
+        },
+        "animations": [
+          {
+            "property": "transform.scaleX",
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 0
+              },
+              {
+                "time": "${_duration}",
+                "value": 1,
+                "easing": "linear"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

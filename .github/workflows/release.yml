@@ -1,0 +1,146 @@
+# 3つの OS ぶんの実行ファイルを作って、GitHub Release に貼る。
+#
+# ## なぜ CI が要るのか
+#
+# `tools/build_exe.py` が使う PyInstaller は **クロスコンパイルできません**。
+# 走らせた OS 向けの実行ファイルしか作れないので、Windows / Linux / macOS の
+# 3種を配るには「3つの OS で1回ずつ走らせる」以外に方法がありません。
+# ローカルの Mac だけでは macOS 版しか作れない、というのがこの CI の理由です。
+#
+# ## 何を作るか
+#
+#   movo-<version>-windows-x64.zip     Windows 用（onedir）
+#   movo-<version>-linux-x64.tar.gz    Linux 用（onedir）
+#   movo-<version>-macos-arm64.tar.gz  macOS 用（onedir・Apple Silicon）
+#   movo-<version>-macos-x64.tar.gz    macOS 用（Intel）
+#   SHA256SUMS.txt                     全部のハッシュ
+#
+# **onedir にしています。** 1ファイル形式は起動のたびに 75MB を展開するので、
+# 並列レンダリング（`--jobs`）の子プロセスが毎回それをやることになります。
+# 実測で 10 秒の動画が「ソースから 13 秒 / 1ファイル EXE から 42 秒」でした
+# （`tools/build_exe.py` の冒頭に記録があります）。配布物は速いほうを選びます。
+#
+# ## 署名について
+#
+# **署名していません。** そのため次が起きます。ダウンロードページにも同じことを書きます。
+#   - Windows: SmartScreen が「WindowsによってPCが保護されました」を出す
+#   - macOS: Gatekeeper が「開発元を検証できません」で止める
+# 署名するには Apple Developer Program（年 99 USD）と Windows のコード署名証明書が
+# 要ります。有料なので、入れるかどうかは持ち主の判断です。
+
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "版（例 1.0.0）。タグを打たずに試すとき用"
+        required: false
+        default: "0.0.0-dev"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      # 1つの OS が落ちても他は最後まで作る。3つ揃わない理由を知りたいので、
+      # 途中で止めるより全部走らせたほうが分かる。
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows-x64
+            archive: zip
+          - os: ubuntu-latest
+            target: linux-x64
+            archive: tar
+          - os: macos-14 # Apple Silicon
+            target: macos-arm64
+            archive: tar
+          - os: macos-13 # Intel
+            target: macos-x64
+            archive: tar
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          # numba は対応する Python の版が遅れることがある。3.11 は
+          # pyproject の requires-python の下限で、numba の対応も確実。
+          python-version: "3.11"
+
+      - name: 依存を入れる
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: テスト
+        # 実行ファイルを作る前に落とす。壊れたものを配らないため。
+        run: python -m pytest -q
+
+      - name: 実行ファイルを作る
+        # --onedir の理由は冒頭のコメントのとおり。
+        run: python tools/build_exe.py --onedir
+
+      - name: 版を決める
+        id: version
+        shell: bash
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: まとめる（zip）
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          $name = "movo-${{ steps.version.outputs.value }}-${{ matrix.target }}"
+          Compress-Archive -Path dist/movo/* -DestinationPath "$name.zip"
+
+      - name: まとめる（tar.gz）
+        if: matrix.archive == 'tar'
+        shell: bash
+        run: |
+          name="movo-${{ steps.version.outputs.value }}-${{ matrix.target }}"
+          # 展開したときに movo/ という1つのフォルダになるようにする。
+          tar -czf "$name.tar.gz" -C dist movo
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: movo-${{ matrix.target }}
+          path: |
+            movo-*.zip
+            movo-*.tar.gz
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    # タグを打ったときだけ Release にする。workflow_dispatch は試し打ち用なので
+    # artifact に置くだけで止める。
+    if: github.ref_type == 'tag'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: ハッシュを出す
+        # 配布物が途中で差し替わっていないことを、受け取った側が確かめられるように。
+        run: |
+          cd artifacts
+          sha256sum movo-* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true

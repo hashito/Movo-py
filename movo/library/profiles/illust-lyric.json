@@ -1,0 +1,39 @@
+{
+  "name": "illust-lyric",
+  "label": "一枚絵＋歌詞",
+  "note": "絵を見せる様式なので長回し。ただし呼吸・寄り引きが無いと紙芝居になる。",
+  "target": {
+    "cutSeconds": [
+      4,
+      16
+    ],
+    "cutsPerMinute": [
+      4,
+      15
+    ],
+    "motion": [
+      0.002,
+      0.012
+    ],
+    "stillRatio": [
+      0,
+      0.85
+    ],
+    "colors": [
+      12,
+      96
+    ],
+    "saturation": [
+      0.15,
+      0.5
+    ],
+    "contrast": [
+      0.1,
+      0.32
+    ],
+    "detail": [
+      0.015,
+      0.05
+    ]
+  }
+}

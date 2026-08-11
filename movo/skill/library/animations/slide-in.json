@@ -1,0 +1,97 @@
+{
+  "animation": {
+    "name": "slide-in",
+    "title": "スライドイン",
+    "description": "指定方向から滑り込む。レイヤーの位置に対する相対移動なので座標を書き直さなくてよい。",
+    "category": "in",
+    "tags": [
+      "登場",
+      "移動"
+    ]
+  },
+  "inputs": {
+    "delay": {
+      "type": "number",
+      "default": 0
+    },
+    "duration": {
+      "type": "number",
+      "default": 0.7,
+      "min": 0.01
+    },
+    "distance": {
+      "type": "number",
+      "unit": "px",
+      "default": 220,
+      "label": "移動量"
+    },
+    "direction": {
+      "type": "choice",
+      "options": [
+        "left",
+        "right",
+        "up",
+        "down"
+      ],
+      "default": "left"
+    },
+    "fade": {
+      "type": "boolean",
+      "default": true,
+      "label": "同時にフェード"
+    },
+    "easing": {
+      "type": "text",
+      "default": "easeOutCubic",
+      "label": "イージング"
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.x",
+        "relative": true,
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": "${direction == 'left' ? -distance : direction == 'right' ? distance : 0}"
+          },
+          {
+            "time": "${delay + duration}",
+            "value": 0,
+            "easing": "${easing}"
+          }
+        ]
+      },
+      {
+        "property": "transform.y",
+        "relative": true,
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": "${direction == 'up' ? -distance : direction == 'down' ? distance : 0}"
+          },
+          {
+            "time": "${delay + duration}",
+            "value": 0,
+            "easing": "${easing}"
+          }
+        ]
+      },
+      {
+        "when": "${fade}",
+        "property": "transform.opacity",
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": 0
+          },
+          {
+            "time": "${delay + duration * 0.6}",
+            "value": 1
+          }
+        ]
+      }
+    ]
+  }
+}

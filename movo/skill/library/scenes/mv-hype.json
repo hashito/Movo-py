@@ -1,0 +1,233 @@
+{
+  "skill": {
+    "name": "mv-hype",
+    "kind": "scene",
+    "title": "歌詞を激しく飛ばす（高速カット・全画面タイポ）",
+    "description": "歌詞を半小節ごとに叩き付ける。集中線・放射・拍の詰め・色収差を重ねた «盛り上がり» 用のシーン。既定は 8 小節。",
+    "category": "lyric",
+    "tags": [
+      "MV",
+      "歌詞",
+      "高速",
+      "タイポグラフィ",
+      "シーン"
+    ],
+    "learnedFrom": [
+      "https://www.youtube.com/watch?v=VWVtIg5cdDU",
+      "https://www.youtube.com/watch?v=cm-l2h6GB8Q"
+    ]
+  },
+  "inputs": {
+    "lines": {
+      "type": "textList",
+      "label": "歌詞（1 行ずつ叩き付ける）",
+      "default": [
+        "ぐるぐる",
+        "まわる",
+        "とまらない",
+        "まだ終わらない"
+      ]
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 8,
+      "min": 0.5,
+      "max": 64
+    },
+    "background": {
+      "type": "color",
+      "default": "#0b0710"
+    },
+    "color": {
+      "type": "color",
+      "label": "文字色",
+      "default": "#ffffff"
+    },
+    "accent": {
+      "type": "color",
+      "label": "差し色",
+      "default": "#ff2e6d"
+    },
+    "second": {
+      "type": "color",
+      "label": "もう 1 色",
+      "default": "#3ad6ff"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "label": "文字の大きさ",
+      "default": 300,
+      "min": 24
+    },
+    "cut": {
+      "type": "number",
+      "label": "何小節ごとに歌詞を切り替えるか",
+      "default": 0.5,
+      "min": 0.25,
+      "max": 4
+    },
+    "shake": {
+      "type": "number",
+      "label": "画面の揺れ",
+      "default": 1,
+      "min": 0,
+      "max": 3
+    }
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+  "scene": {
+    "duration": "${bars}bar",
+    "background": "${background}",
+    "transition": {
+      "type": "fade",
+      "in": 0.06,
+      "out": 0.1
+    },
+    "layers": [
+      {
+        "// 背景。拍で色がわずかに動く面。放射は集中線に任せる。": "",
+        "id": "${_id}-bg",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width}",
+          "height": "${height}",
+          "fill": "${accent}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": {
+            "expression": "0.10 + beatPulse(bpm, 1, 10) * 0.10"
+          }
+        },
+        "blend": "screen"
+      },
+      {
+        "// 集中線。拍のアタマだけ内側から開く。常時出すと «ただの模様» になる。": "",
+        "id": "${_id}-lines",
+        "type": "speedLines",
+        "speedLines": {
+          "count": 150,
+          "style": "taperInner",
+          "thickness": "${max(1, size * 0.012)}",
+          "color": "${color}",
+          "density": 0.5,
+          "innerRadius": {
+            "expression": "0.42 + beatPulse(bpm, 1, 9) * 0.28"
+          },
+          "outerRadius": 1.6,
+          "jitter": 0.7
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "width": "${width}",
+          "height": "${height}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.4
+        }
+      },
+      {
+        "// 歌詞。cut 小節ごとに 1 行ずつ、文字単位で跳ね上げて叩き付ける。": "",
+        "// repeat.over で «行ごとに 1 レイヤー»。添字は indexAs で引く。": "",
+        "// 時刻つきの行（.lrc など）なら its 時刻を使い、無ければ cut 小節で等分する。": "",
+        "id": "${_id}-line-${i}",
+        "type": "text",
+        "text": "${lyricText(line)}",
+        "start": "${lyricAt(line, i * cut * 60 / bpm * 4)}",
+        "end": "${lyricAt(line, i * cut * 60 / bpm * 4) + lyricFor(line, cut * 60 / bpm * 4)}",
+        "style": {
+          "size": "${size}",
+          "color": "${i % 3 == 0 ? color : (i % 3 == 1 ? accent : second)}",
+          "align": "center",
+          "weight": "bold",
+          "letterSpacing": "${size * -0.03}",
+          "// 長い行が来ても画面から出ないように、幅で自動縮小する。": "",
+          "// 既定の size 300 は «ぐるぐる» のような 4 文字の行を想定した値で、": "",
+          "// 実際の歌詞（15 文字）を入れると両端が切れます（実際に切れました）。": "",
+          "// rich-* のシーンは最初からこうしてあり、mv-* だけ抜けていました。": "",
+          "fit": {
+            "mode": "shrink",
+            "maxWidth": "${width * 0.92}",
+            "minSize": 0.25
+          },
+          "stroke": {
+            "color": "${i % 3 == 0 ? accent : (i % 3 == 1 ? second : color)}",
+            "width": "${size * 0.03}"
+          }
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY + (i % 3 - 1) * size * 0.22}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "rotation": "${(i % 2 == 0 ? -1 : 1) * 4}"
+        },
+        "use": [
+          {
+            "animation": "pop-in-chars",
+            "with": {
+              "stagger": 0.035,
+              "rise": "${size * 0.35}",
+              "duration": 0.18
+            }
+          },
+          {
+            "animation": "beat-bounce",
+            "with": {
+              "amount": 0.06,
+              "division": 1,
+              "decay": 14
+            }
+          }
+        ],
+        "repeat": {
+          "over": "${lines}",
+          "as": "line",
+          "indexAs": "i"
+        }
+      },
+      {
+        "// 小節のアタマで «ブルッ» と揺らす。常時揺らすと酔うので一瞬だけ。": "",
+        "id": "${_id}-shake",
+        "type": "frameBuffer",
+        "frameBuffer": {
+          "source": "below",
+          "clear": true
+        },
+        "when": "${shake > 0}",
+        "transform": {
+          "x": {
+            "expression": "beatPulse(bpm, 4, 16) * 14 * ${shake}"
+          },
+          "y": {
+            "expression": "wiggle(3, 3) * ${shake}"
+          },
+          "anchorX": 0,
+          "anchorY": 0,
+          "scale": {
+            "expression": "1 + beatPulse(bpm, 1, 20) * 0.025"
+          }
+        },
+        "effects": [
+          {
+            "// 色収差は拍のアタマだけ強く出す。常時強いと «ただのぼけ» になる。": "",
+            "type": "chromaticAberration",
+            "amount": {
+              "expression": "1.5 + beatPulse(bpm, 1, 16) * 10"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

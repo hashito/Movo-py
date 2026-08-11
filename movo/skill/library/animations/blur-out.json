@@ -1,0 +1,70 @@
+{
+  "animation": {
+    "name": "blur-out",
+    "title": "ぼけて退場",
+    "description": "ぼけながら消える。",
+    "category": "out",
+    "tags": [
+      "退場",
+      "blur"
+    ]
+  },
+  "inputs": {
+    "at": {
+      "type": "number",
+      "default": 0
+    },
+    "duration": {
+      "type": "number",
+      "default": 0.6,
+      "min": 0.01
+    },
+    "radius": {
+      "type": "number",
+      "unit": "px",
+      "default": 24,
+      "min": 0
+    },
+    "easing": {
+      "type": "text",
+      "default": "easeInCubic",
+      "label": "イージング"
+    }
+  },
+  "produces": {
+    "effects": [
+      {
+        "id": "blurOut",
+        "type": "blur",
+        "radius": {
+          "keyframes": [
+            {
+              "time": "${at}",
+              "value": 0
+            },
+            {
+              "time": "${at + duration}",
+              "value": "${radius}",
+              "easing": "${easing}"
+            }
+          ]
+        }
+      }
+    ],
+    "animations": [
+      {
+        "property": "transform.opacity",
+        "keyframes": [
+          {
+            "time": "${at + duration * 0.4}",
+            "value": 1
+          },
+          {
+            "time": "${at + duration}",
+            "value": 0
+          }
+        ]
+      }
+    ]
+  }
+}

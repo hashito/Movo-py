@@ -1,0 +1,168 @@
+{
+  "skill": {
+    "name": "physics-drop",
+    "title": "物理で落とす",
+    "description": "床と壁を作って玉を落とす。跳ね方は反発係数で決まる。",
+    "category": "physics",
+    "tags": [
+      "物理",
+      "重力"
+    ],
+    "learnedFrom": [
+      "https://sigablog.com/entry/2020/07/25/%E3%80%90Aviutl%E3%80%91%E3%82%88%E3%81%8F%E4%BD%BF%E3%81%86%E3%82%A8%E3%83%95%E3%82%A7%E3%82%AF%E3%83%88%E9%9B%86%EF%BD%9C%E4%BD%BF%E3%81%84%E6%96%B9%E3%81%A8%E4%BD%B5%E3%81%9B%E3%81%A6%E7%B4%B9"
+    ]
+  },
+  "inputs": {
+    "count": {
+      "type": "number",
+      "default": 5,
+      "min": 1,
+      "max": 40,
+      "label": "個数"
+    },
+    "radius": {
+      "type": "number",
+      "unit": "px",
+      "default": 48,
+      "min": 4
+    },
+    "restitution": {
+      "type": "number",
+      "default": 0.7,
+      "min": 0,
+      "max": 1,
+      "label": "反発"
+    },
+    "ballColor": {
+      "type": "color",
+      "default": "#e05b6a"
+    },
+    "floorColor": {
+      "type": "color",
+      "default": "#39406b"
+    },
+    "gravity": {
+      "type": "number",
+      "unit": "px",
+      "default": 1400
+    },
+    "duration": {
+      "type": "number",
+      "default": 6,
+      "min": 0.2
+    },
+    "walls": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#161a2b"
+  },
+  "physicsWorld": {
+    "gravity": {
+      "x": 0,
+      "y": "${gravity}"
+    },
+    "timeStep": 0.0166667,
+    "subSteps": 3,
+    "iterations": 12
+  },
+  "layers": [
+    {
+      "id": "${_id}-floor",
+      "type": "shape",
+      "shape": {
+        "type": "rectangle",
+        "width": "${width * 0.9}",
+        "height": "${34 * scale}",
+        "radius": "${max(1, 8 * scale)}",
+        "fill": "${floorColor}"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${height * 0.92}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "physics": {
+        "type": "rigidBody",
+        "bodyType": "static",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width * 0.9}",
+          "height": "${34 * scale}"
+        },
+        "friction": 0.5,
+        "restitution": 0.35
+      }
+    },
+    {
+      "when": "${walls}",
+      "repeat": {
+        "count": 2,
+        "as": "side"
+      },
+      "id": "${_id}-wall-${sideIndex}",
+      "type": "shape",
+      "shape": {
+        "type": "rectangle",
+        "width": "${34 * scale}",
+        "height": "${height * 0.8}",
+        "fill": "${floorColor}"
+      },
+      "transform": {
+        "x": "${sideIndex == 0 ? width * 0.06 : width * 0.94}",
+        "y": "${centerY}",
+        "anchorX": 0.5,
+        "anchorY": 0.5,
+        "opacity": 0.6
+      },
+      "physics": {
+        "type": "rigidBody",
+        "bodyType": "static",
+        "shape": {
+          "type": "rectangle",
+          "width": "${34 * scale}",
+          "height": "${height * 0.8}"
+        },
+        "restitution": 0.5
+      }
+    },
+    {
+      "repeat": {
+        "count": "${count}",
+        "as": "i"
+      },
+      "id": "${_id}-ball-${iIndex}",
+      "type": "shape",
+      "shape": {
+        "type": "circle",
+        "radius": "${radius}",
+        "fill": "${ballColor}"
+      },
+      "transform": {
+        "x": "${width * 0.2 + (width * 0.6) * (count == 1 ? 0.5 : iIndex / (count - 1))}",
+        "y": "${height * 0.12 + iIndex * 40}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "physics": {
+        "type": "rigidBody",
+        "bodyType": "dynamic",
+        "shape": {
+          "type": "circle",
+          "radius": "${radius}"
+        },
+        "mass": 1,
+        "friction": 0.25,
+        "restitution": "${restitution}",
+        "linearDamping": 0.02,
+        "angularDamping": 0.05
+      }
+    }
+  ]
+}

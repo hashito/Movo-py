@@ -1,0 +1,42 @@
+{
+  "animation": {
+    "name": "float",
+    "title": "ゆらゆら上下",
+    "description": "一定周期で上下に揺れ続ける。待機中のモチーフに。",
+    "category": "loop",
+    "tags": [
+      "ループ",
+      "sine"
+    ]
+  },
+  "inputs": {
+    "frequency": {
+      "type": "number",
+      "default": 0.5,
+      "min": 0.01
+    },
+    "amplitude": {
+      "type": "number",
+      "unit": "px",
+      "default": 20
+    },
+    "phase": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.y",
+        "relative": true,
+        "modulator": {
+          "type": "sine",
+          "frequency": "${frequency}",
+          "amplitude": "${amplitude}",
+          "phase": "${phase}"
+        }
+      }
+    ]
+  }
+}

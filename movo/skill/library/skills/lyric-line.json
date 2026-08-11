@@ -1,0 +1,167 @@
+{
+  "skill": {
+    "name": "lyric-line",
+    "title": "歌詞 1 行（カラオケ塗り）",
+    "description": "未塗りの色から塗り色へ左から塗られていく歌詞。塗り終わりまで尺いっぱいに使う。",
+    "category": "lyric",
+    "tags": [
+      "歌詞",
+      "カラオケ"
+    ],
+    "learnedFrom": [
+      "https://note.com/fog_videoeditor/n/n73377d975d9c",
+      "https://note.com/fontworks_note/n/nb69a95c42408"
+    ]
+  },
+  "inputs": {
+    "text": {
+      "type": "text",
+      "default": "夜のとばりが降りて",
+      "label": "歌詞",
+      "required": true
+    },
+    "reading": {
+      "type": "text",
+      "default": "",
+      "label": "ふりがな・ローマ字"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "default": 64,
+      "min": 8
+    },
+    "baseColor": {
+      "type": "color",
+      "default": "#5d6790"
+    },
+    "fillColor": {
+      "type": "color",
+      "default": "#ffd166"
+    },
+    "strokeColor": {
+      "type": "color",
+      "default": "#0a0a12"
+    },
+    "y": {
+      "type": "number",
+      "unit": "px",
+      "default": 0,
+      "label": "中心からの縦位置"
+    },
+    "startAt": {
+      "type": "number",
+      "default": 0.25,
+      "label": "塗り開始"
+    },
+    "endAt": {
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "label": "塗り終わり（0 で尺いっぱい）"
+    },
+    "duration": {
+      "type": "number",
+      "default": 4,
+      "min": 0.2
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#0a0a12"
+  },
+  "responsiveTime": {
+    "// 行が «ふっと出る» 0.4 秒は歌詞の呼吸。塗り（karaoke）は尺で伸び縮みしてよいが、ここは固定。": "",
+    "in": 0.4
+  },
+  "layers": [
+    {
+      "id": "${_id}-line",
+      "type": "text",
+      "text": "${text}",
+      "style": {
+        "size": "${size}",
+        "color": "${baseColor}",
+        "align": "center",
+        "stroke": {
+          "color": "${strokeColor}",
+          "width": "${size * 0.09}"
+        }
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY + y}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "karaoke": {
+        "progress": {
+          "keyframes": [
+            {
+              "time": "${startAt}",
+              "value": 0
+            },
+            {
+              "time": "${endAt > 0 ? endAt : max(startAt + 0.3, _duration - 0.45)}",
+              "value": 1
+            }
+          ]
+        },
+        "color": "${fillColor}",
+        "softness": 0.015
+      },
+      "use": [
+        {
+          "animation": "fade-in",
+          "with": {
+            "duration": 0.4
+          }
+        },
+        {
+          "animation": "float",
+          "with": {
+            "amplitude": 4,
+            "frequency": 0.35
+          }
+        },
+        {
+          "animation": "breathe",
+          "with": {
+            "frequency": 0.5,
+            "scaleAmount": 0.012,
+            "opacityAmount": 0.05
+          }
+        }
+      ]
+    },
+    {
+      "when": "${reading}",
+      "id": "${_id}-reading",
+      "type": "text",
+      "text": "${reading}",
+      "style": {
+        "size": "${size * 0.35}",
+        "color": "${baseColor}",
+        "align": "center",
+        "letterSpacing": "${max(1, 2 * scale)}"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY + y + size * 0.95}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "fade-in",
+          "with": {
+            "delay": 0.2,
+            "duration": 0.5
+          }
+        }
+      ]
+    }
+  ]
+}

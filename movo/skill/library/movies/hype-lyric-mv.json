@@ -1,0 +1,263 @@
+{
+  "skill": {
+    "name": "hype-lyric-mv",
+    "kind": "movie",
+    "title": "激しい歌詞 MV 1 本",
+    "description": "静かに入って一気に叩き付け、落として、もう一度上げて決める。歌詞を高速で飛ばす MV の骨格。",
+    "category": "lyric",
+    "tags": [
+      "MV",
+      "歌詞",
+      "高速",
+      "タイポグラフィ",
+      "ムービー"
+    ],
+    "learnedFrom": [
+      "https://www.youtube.com/watch?v=VWVtIg5cdDU",
+      "https://www.youtube.com/watch?v=cm-l2h6GB8Q"
+    ]
+  },
+  "inputs": {
+    "title": {
+      "type": "text",
+      "label": "曲名",
+      "default": "無題"
+    },
+    "subtitle": {
+      "type": "text",
+      "label": "副題・作者名",
+      "default": ""
+    },
+    "credit": {
+      "type": "text",
+      "label": "クレジット",
+      "default": "movie : Movo"
+    },
+    "bpm": {
+      "type": "number",
+      "label": "BPM",
+      "default": 174,
+      "min": 40,
+      "max": 300
+    },
+    "hypeLines": {
+      "type": "textList",
+      "label": "叩き付ける歌詞（1 行ずつ全画面で飛ばす）",
+      "default": [
+        "ぐるぐる",
+        "まわる",
+        "とまらない",
+        "まだ終わらない"
+      ]
+    },
+    "hypeLines2": {
+      "type": "textList",
+      "label": "2 度目に叩き付ける歌詞（空なら 1 度目と同じ）",
+      "default": []
+    },
+    "lines": {
+      "type": "textList",
+      "label": "落としたところの歌詞",
+      "default": [
+        "息を止めて",
+        "数を数えていた"
+      ]
+    },
+    "hook": {
+      "type": "text",
+      "label": "決め文句（空なら叩き付ける歌詞の 1 行目）",
+      "default": ""
+    },
+    "introBars": {
+      "type": "number",
+      "label": "イントロの小節数",
+      "default": 4,
+      "min": 0.25,
+      "max": 64
+    },
+    "hypeBars": {
+      "type": "number",
+      "label": "叩き付けるところの小節数",
+      "default": 8,
+      "min": 0.5,
+      "max": 64
+    },
+    "verseBars": {
+      "type": "number",
+      "label": "落としたところの小節数",
+      "default": 8,
+      "min": 0.25,
+      "max": 64
+    },
+    "chorusBars": {
+      "type": "number",
+      "label": "決めの小節数",
+      "default": 8,
+      "min": 0.25,
+      "max": 64
+    },
+    "outroBars": {
+      "type": "number",
+      "label": "アウトロの小節数",
+      "default": 4,
+      "min": 0.25,
+      "max": 64
+    },
+    "background": {
+      "type": "color",
+      "default": "#0b0710"
+    },
+    "color": {
+      "type": "color",
+      "label": "文字色",
+      "default": "#ffffff"
+    },
+    "accent": {
+      "type": "color",
+      "label": "差し色",
+      "default": "#ff2e6d"
+    },
+    "second": {
+      "type": "color",
+      "label": "もう 1 色",
+      "default": "#3ad6ff"
+    },
+    "titleSize": {
+      "type": "number",
+      "label": "曲名の大きさ",
+      "default": 118,
+      "min": 8
+    },
+    "lyricSize": {
+      "type": "number",
+      "label": "落としたところの歌詞の大きさ",
+      "default": 56,
+      "min": 8
+    },
+    "hypeSize": {
+      "type": "number",
+      "label": "叩き付ける歌詞の大きさ",
+      "default": 300,
+      "min": 24
+    },
+    "hookSize": {
+      "type": "number",
+      "label": "決め文句の大きさ",
+      "default": 168,
+      "min": 8
+    },
+    "cut": {
+      "type": "number",
+      "label": "何小節ごとに歌詞を切り替えるか",
+      "default": 0.5,
+      "min": 0.25,
+      "max": 4
+    },
+    "shake": {
+      "type": "number",
+      "label": "画面の揺れ",
+      "default": 1,
+      "min": 0,
+      "max": 3
+    },
+    "division": {
+      "type": "number",
+      "label": "決めで何拍ごとに跳ねるか",
+      "default": 1,
+      "min": 0.25,
+      "max": 8
+    }
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "background": "#0b0710"
+  },
+  "project": {
+    "bpm": 174,
+    "seed": 20260728
+  },
+  "sequence": [
+    {
+      "scene": "mv-intro",
+      "with": {
+        "title": "${title}",
+        "subtitle": "${subtitle}",
+        "bars": "${introBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "size": "${titleSize}"
+      }
+    },
+    {
+      "scene": "mv-hype",
+      "with": {
+        "lines": "${hypeLines}",
+        "bars": "${hypeBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "second": "${second}",
+        "size": "${hypeSize}",
+        "cut": "${cut}",
+        "shake": "${shake}"
+      }
+    },
+    {
+      "scene": "mv-verse",
+      "with": {
+        "lines": "${lines}",
+        "bars": "${verseBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "size": "${lyricSize}"
+      }
+    },
+    {
+      "scene": "mv-hype",
+      "with": {
+        "lines": "${hypeLines2.length > 0 ? hypeLines2 : hypeLines}",
+        "bars": "${hypeBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${second}",
+        "second": "${accent}",
+        "size": "${hypeSize}",
+        "cut": "${cut}",
+        "shake": "${shake * 1.4}"
+      }
+    },
+    {
+      "scene": "mv-chorus",
+      "with": {
+        "hook": "${hook != '' ? hook : hypeLines[0]}",
+        "bars": "${chorusBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "accent": "${accent}",
+        "size": "${hookSize}",
+        "division": "${division}"
+      }
+    },
+    {
+      "scene": "mv-outro",
+      "with": {
+        "title": "${title}",
+        "credit": "${credit}",
+        "bars": "${outroBars}",
+        "background": "${background}",
+        "color": "${color}",
+        "size": "${titleSize * 0.75}"
+      }
+    }
+  ],
+  "render": {
+    "quality": "standard"
+  },
+  "output": {
+    "format": "mp4",
+    "codec": "h264"
+  }
+}

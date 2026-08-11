@@ -1,0 +1,60 @@
+{
+  "animation": {
+    "name": "breathe",
+    "title": "呼吸",
+    "description": "拡大と明るさをゆっくり同時に動かす。生き物っぽさが出る。",
+    "category": "loop",
+    "tags": [
+      "ループ",
+      "scale",
+      "opacity"
+    ]
+  },
+  "inputs": {
+    "frequency": {
+      "type": "number",
+      "default": 0.3,
+      "min": 0.01
+    },
+    "scaleAmount": {
+      "type": "number",
+      "default": 0.04
+    },
+    "opacityAmount": {
+      "type": "number",
+      "default": 0.08
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.scaleX",
+        "relative": true,
+        "modulator": {
+          "type": "sine",
+          "frequency": "${frequency}",
+          "amplitude": "${scaleAmount}"
+        }
+      },
+      {
+        "property": "transform.scaleY",
+        "relative": true,
+        "modulator": {
+          "type": "sine",
+          "frequency": "${frequency}",
+          "amplitude": "${scaleAmount}"
+        }
+      },
+      {
+        "property": "transform.opacity",
+        "relative": true,
+        "modulator": {
+          "type": "sine",
+          "frequency": "${frequency}",
+          "amplitude": "${opacityAmount}",
+          "phase": 0.25
+        }
+      }
+    ]
+  }
+}

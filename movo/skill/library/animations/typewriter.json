@@ -1,0 +1,43 @@
+{
+  "animation": {
+    "name": "typewriter",
+    "title": "タイプライター",
+    "description": "1 文字ずつパッと出る。歌詞やナレーションに。",
+    "category": "text",
+    "tags": [
+      "テキスト"
+    ]
+  },
+  "inputs": {
+    "stagger": {
+      "type": "number",
+      "default": 0.07,
+      "min": 0,
+      "label": "1 文字あたり"
+    },
+    "delay": {
+      "type": "number",
+      "default": 0
+    },
+    "unit": {
+      "type": "choice",
+      "options": [
+        "character",
+        "word",
+        "line"
+      ],
+      "default": "character"
+    }
+  },
+  "produces": {
+    "textAnimator": {
+      "unit": "${unit}",
+      "stagger": "${stagger}",
+      "duration": 0.01,
+      "delay": "${delay}",
+      "from": {
+        "opacity": 0
+      }
+    }
+  }
+}

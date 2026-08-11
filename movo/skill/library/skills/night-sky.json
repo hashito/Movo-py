@@ -1,0 +1,88 @@
+{
+  "skill": {
+    "name": "night-sky",
+    "title": "夜空",
+    "description": "グラデーションの空に細かい粒を降らせた背景。",
+    "category": "background",
+    "tags": [
+      "背景",
+      "シェーダー"
+    ],
+    "learnedFrom": [
+      "https://how-to-use-music-video.com/%E3%82%B5%E3%82%A4%E3%83%88%E3%83%9E%E3%83%83%E3%83%97/"
+    ]
+  },
+  "inputs": {
+    "topColor": {
+      "type": "color",
+      "default": "#05060f"
+    },
+    "bottomColor": {
+      "type": "color",
+      "default": "#243b7a"
+    },
+    "stars": {
+      "type": "number",
+      "default": 140,
+      "min": 0,
+      "label": "星の量"
+    },
+    "duration": {
+      "type": "number",
+      "default": 8,
+      "min": 0.2
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+  "layers": [
+    {
+      "id": "${_id}-sky",
+      "type": "shader",
+      "shader": {
+        "expression": "v",
+        "colorA": "${topColor}",
+        "colorB": "${bottomColor}",
+        "resolution": 48
+      },
+      "transform": {
+        "x": 0,
+        "y": 0,
+        "width": "${width}",
+        "height": "${height}",
+        "anchorX": 0,
+        "anchorY": 0
+      }
+    },
+    {
+      "when": "${stars > 0}",
+      "id": "${_id}-stars",
+      "type": "particle",
+      "transform": {
+        "x": "${centerX}",
+        "y": 0
+      },
+      "emitter": {
+        "rate": "${stars}",
+        "lifetime": 9,
+        "lifetimeVariance": 0.4,
+        "speed": 12,
+        "spread": 30,
+        "direction": 90,
+        "size": "${max(1, 3 * scale)}",
+        "sizeVariance": 0.8,
+        "color": "#ffffff",
+        "gravityScale": 0.02,
+        "drag": 2,
+        "fadeIn": 0.3,
+        "fadeOut": 0.4,
+        "width": "${width}",
+        "maxParticles": 800,
+        "prewarm": 8
+      }
+    }
+  ]
+}

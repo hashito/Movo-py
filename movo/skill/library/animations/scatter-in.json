@@ -1,0 +1,67 @@
+{
+  "animation": {
+    "name": "scatter-in",
+    "title": "文字が集まってくる",
+    "description": "ばらばらに散った文字が所定の位置に集まる。決定的なので毎回同じ。",
+    "category": "text",
+    "tags": [
+      "テキスト",
+      "ランダム"
+    ]
+  },
+  "inputs": {
+    "stagger": {
+      "type": "number",
+      "default": 0.035,
+      "min": 0
+    },
+    "duration": {
+      "type": "number",
+      "default": 0.75,
+      "min": 0.01
+    },
+    "delay": {
+      "type": "number",
+      "default": 0
+    },
+    "spread": {
+      "type": "number",
+      "unit": "px",
+      "default": 260,
+      "label": "散らばり"
+    },
+    "rotate": {
+      "type": "number",
+      "default": 120
+    },
+    "seed": {
+      "type": "number",
+      "default": 7
+    },
+    "easing": {
+      "type": "text",
+      "default": "easeOutBack",
+      "label": "イージング"
+    }
+  },
+  "produces": {
+    "textAnimator": {
+      "unit": "character",
+      "order": "random",
+      "seed": "${seed}",
+      "stagger": "${stagger}",
+      "duration": "${duration}",
+      "delay": "${delay}",
+      "easing": "${easing}",
+      "from": {
+        "opacity": 0,
+        "random": {
+          "x": "${spread}",
+          "y": "${spread * 0.7}",
+          "rotation": "${rotate}",
+          "scale": 0.3
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "animation": {
+    "name": "pop-in-chars",
+    "title": "文字が跳ねて登場",
+    "description": "文字単位で下から跳ね上がる。タイトルやサビに。",
+    "category": "text",
+    "tags": [
+      "テキスト",
+      "scale"
+    ]
+  },
+  "inputs": {
+    "stagger": {
+      "type": "number",
+      "default": 0.06,
+      "min": 0
+    },
+    "duration": {
+      "type": "number",
+      "default": 0.5,
+      "min": 0.01
+    },
+    "delay": {
+      "type": "number",
+      "default": 0
+    },
+    "rise": {
+      "type": "number",
+      "unit": "px",
+      "default": 50
+    },
+    "from": {
+      "type": "number",
+      "default": 0.35,
+      "min": 0
+    },
+    "order": {
+      "type": "choice",
+      "options": [
+        "forward",
+        "reverse",
+        "center",
+        "random"
+      ],
+      "default": "forward"
+    },
+    "easing": {
+      "type": "text",
+      "default": "easeOutBack",
+      "label": "イージング"
+    },
+    "unit": {
+      "type": "choice",
+      "options": [
+        "character",
+        "word",
+        "line"
+      ],
+      "default": "character"
+    }
+  },
+  "produces": {
+    "textAnimator": {
+      "unit": "${unit}",
+      "stagger": "${stagger}",
+      "duration": "${duration}",
+      "delay": "${delay}",
+      "order": "${order}",
+      "easing": "${easing}",
+      "from": {
+        "opacity": 0,
+        "y": "${rise}",
+        "scale": "${from}"
+      }
+    }
+  }
+}

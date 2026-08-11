@@ -1,0 +1,120 @@
+{
+  "skill": {
+    "name": "mv-outro",
+    "kind": "scene",
+    "title": "アウトロ（曲名とクレジット）",
+    "description": "曲名をもう一度置いて、クレジットを添えたまま暗転していく。既定は 4 小節。",
+    "category": "title",
+    "tags": [
+      "MV",
+      "アウトロ",
+      "シーン"
+    ]
+  },
+  "inputs": {
+    "title": {
+      "type": "text",
+      "label": "曲名",
+      "default": "無題"
+    },
+    "credit": {
+      "type": "text",
+      "label": "クレジット",
+      "default": "movie : Movo"
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 4,
+      "min": 0.25,
+      "max": 64
+    },
+    "background": {
+      "type": "color",
+      "default": "#0a0a12"
+    },
+    "color": {
+      "type": "color",
+      "label": "文字色",
+      "default": "#f2efe8"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "label": "曲名の大きさ",
+      "default": 88,
+      "min": 8
+    }
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+  "responsiveTime": {
+    "// 曲名がゆっくり出る 1.1 秒は «終わりの落ち着き» を作っている。短い尺でも早送りにしない。": "",
+    "in": 1.2
+  },
+  "scene": {
+    "duration": "${bars}bar",
+    "background": "${background}",
+    "transition": {
+      "type": "fade",
+      "in": 0.5,
+      "out": 1.6
+    },
+    "layers": [
+      {
+        "id": "${_id}-title",
+        "type": "text",
+        "text": "${title}",
+        "style": {
+          "size": "${size}",
+          "color": "${color}",
+          "align": "center",
+          "letterSpacing": "${size * 0.12}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY - size * 0.2}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "use": [
+          {
+            "animation": "fade-in",
+            "with": {
+              "duration": 1.1
+            }
+          }
+        ]
+      },
+      {
+        "when": "${credit}",
+        "id": "${_id}-credit",
+        "type": "text",
+        "text": "${credit}",
+        "style": {
+          "size": "${size * 0.22}",
+          "color": "${color}",
+          "align": "center",
+          "letterSpacing": "${size * 0.06}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY + size * 0.6}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "use": [
+          {
+            "animation": "fade-in",
+            "with": {
+              "delay": "${min(1.2, _duration * 0.3)}",
+              "duration": 0.9
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "animation": {
+    "name": "rise-in",
+    "title": "下からふわっと登場",
+    "description": "少し下から上がりながらフェードイン。文章に向く控えめな登場。",
+    "category": "in",
+    "tags": [
+      "登場",
+      "移動",
+      "opacity"
+    ]
+  },
+  "inputs": {
+    "delay": {
+      "type": "number",
+      "default": 0
+    },
+    "duration": {
+      "type": "number",
+      "default": 0.7,
+      "min": 0.01
+    },
+    "distance": {
+      "type": "number",
+      "unit": "px",
+      "default": 40
+    },
+    "easing": {
+      "type": "text",
+      "default": "easeOutCubic",
+      "label": "イージング"
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.y",
+        "relative": true,
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": "${distance}"
+          },
+          {
+            "time": "${delay + duration}",
+            "value": 0,
+            "easing": "${easing}"
+          }
+        ]
+      },
+      {
+        "property": "transform.opacity",
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": 0
+          },
+          {
+            "time": "${delay + duration * 0.7}",
+            "value": 1
+          }
+        ]
+      }
+    ]
+  }
+}

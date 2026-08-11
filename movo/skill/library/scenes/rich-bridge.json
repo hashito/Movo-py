@@ -1,0 +1,335 @@
+{
+  "skill": {
+    "name": "rich-bridge",
+    "kind": "scene",
+    "title": "落ちサビ（谷。切らない・動かさない・要素を消す）",
+    "description": "1 カット・ほぼ静止・エフェクトはほぼ OFF。歌詞は 1 行だけ大きく中央に置き、背景の要素は時間とともに消えていく。大サビの高さはこの谷の低さで決まる。既定は 3 小節。",
+    "category": "lyric",
+    "tags": [
+      "MV",
+      "落ちサビ",
+      "谷",
+      "静止",
+      "シーン"
+    ]
+  },
+  "inputs": {
+    "lines": {
+      "type": "textList",
+      "label": "歌詞（谷は 1 行が基本。2 行以上なら尺を等分する）",
+      "default": [
+        "木のような草でも"
+      ]
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 3,
+      "min": 0.5,
+      "max": 64
+    },
+    "bpm": {
+      "type": "number",
+      "label": "BPM（単体で描くとき用。プロジェクトの BPM があればそちらが勝つ）",
+      "default": 148,
+      "min": 20,
+      "max": 400
+    },
+    "background": {
+      "type": "color",
+      "label": "地の色",
+      "default": "#eef1e9"
+    },
+    "color": {
+      "type": "color",
+      "label": "歌詞の色",
+      "default": "#24301f"
+    },
+    "accent": {
+      "type": "color",
+      "label": "差し色（ここではほとんど見えない濃さで使う）",
+      "default": "#7aab6d"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "label": "歌詞の大きさ（谷はいちばん大きく）",
+      "default": 112,
+      "min": 8
+    },
+    "artAsset": {
+      "type": "asset",
+      "label": "背景の絵（素材名。ここでは消えていく側）",
+      "default": ""
+    },
+    "figureAsset": {
+      "type": "asset",
+      "label": "人物・シルエットの絵（素材名。ここでは最後まで残る側）",
+      "default": ""
+    },
+    "variant": {
+      "type": "number",
+      "label": "見え方の切り替え（上下の明度配置と人物の立つ側が入れ替わる）",
+      "default": 0,
+      "min": 0,
+      "max": 8
+    }
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+  "responsiveTime": {
+    "// 1 行がふっと現れて、ふっと消えるところ。ここが縮むと «静けさ» が «素早さ» になる。": "",
+    "in": "1beat",
+    "out": "1beat"
+  },
+  "scene": {
+    "// この MV でいちばん大事なシーン。«音を抜く» の映像版は «要素を消す» こと。": "",
+    "// 足さない。切らない（1 カット）。動きをほぼ止める。エフェクトはほぼ OFF。": "",
+    "// ここで引くから、次の大サビが高く聞こえる。谷の低さが山の高さを決める。": "",
+    "// 出入りだけは長め（dissolve 0.8 秒）。切り替わりを «切った» と感じさせない。": "",
+    "duration": "${bars}bar",
+    "background": "${background}",
+    "transition": {
+      "type": "dissolve",
+      "in": 0.8,
+      "out": 0.8
+    },
+    "layers": [
+      {
+        "// 地の色に差し色をひと匙。A メロの 0.30 に対してここは 0.14。": "",
+        "// variant で上下の明度配置が入れ替わる。動きはゼロ。": "",
+        "id": "${_id}-wash",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width}",
+          "height": "${height}",
+          "fill": {
+            "type": "linear",
+            "angle": "${variant % 2 == 1 ? 270 : 90}",
+            "stops": [
+              {
+                "offset": 0,
+                "color": "${accent}"
+              },
+              {
+                "offset": 1,
+                "color": "${background}"
+              }
+            ]
+          }
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.14
+        }
+      },
+      {
+        "// 背景の絵は «消えていく側»。動かさず、不透明度だけを落とす。": "",
+        "// 画としては «引き算が進行している» ことそのものが見せ場になる。": "",
+        "// ぼかしを 1 つだけ残すのは、1 行に視線を集めるため（理由が言える 1 個だけ残す）。": "",
+        "// 背景は画面いっぱいに引き伸ばす。Movo の image は «片方だけ書けば比率を保つ»": "",
+        "// ようにはなっておらず、書かなかった側には素材の原寸がそのまま入ります。": "",
+        "// 穴が開くほうが目立つので、背景は両方書く（rich-verse と同じ判断）。": "",
+        "id": "${_id}-art",
+        "when": "${artAsset}",
+        "type": "image",
+        "asset": "${artAsset}",
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "width": "${width}",
+          "height": "${height}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.3
+        },
+        "effects": [
+          {
+            "type": "blur",
+            "radius": "${max(4, height * 0.014)}"
+          }
+        ],
+        "animations": [
+          {
+            "property": "transform.opacity",
+            "keyframes": [
+              {
+                "time": 0,
+                "value": 0.3
+              },
+              {
+                "time": "${_duration}",
+                "value": 0.06,
+                "easing": "linear"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "// 水平線 1 本。空っぽの画面に «ここが下です» とだけ言う、唯一の造形。": "",
+        "// variant で上下が入れ替わる。太さは画面高さの 0.3%（見えるか見えないか）。": "",
+        "id": "${_id}-horizon",
+        "type": "shape",
+        "shape": {
+          "type": "rectangle",
+          "width": "${width * 0.62}",
+          "height": "${max(1, height * 0.003)}",
+          "fill": "${accent}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${variant % 2 == 1 ? centerY - height * 0.22 : centerY + height * 0.22}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.35
+        }
+      },
+      {
+        "// 人物は «最後まで残る側»。完全に静止させる。": "",
+        "// 谷では、動かさないこと自体が表現になる。": "",
+        "// width / height は書かず scale で決める。box で指定すると素材の縦横比": "",
+        "// （1:1 〜 1:3.6）で潰れるため（→ rich-verse の同じ箇所に理由を書いています）。": "",
+        "// 足元を床に置いて anchorY: 1。谷なので «そこに立っているだけ»。": "",
+        "id": "${_id}-figure",
+        "when": "${figureAsset}",
+        "type": "image",
+        "asset": "${figureAsset}",
+        "transform": {
+          "x": "${variant % 2 == 1 ? width * 0.24 : width * 0.76}",
+          "y": "${height * 0.99}",
+          "scale": "${scale * 0.26}",
+          "anchorX": 0.5,
+          "anchorY": 1,
+          "opacity": 0.55
+        }
+      },
+      {
+        "// 歌詞の «座布団»。谷は要素を足したくないので、絵か人物を渡されたときだけ敷く。": "",
+        "// 何も無い画面では下地が地の色そのものなので、コントラストはもともと足りている。": "",
+        "// 色を background にしてあるのは、呼ぶ側が «color と対になる色» として選んだ色だから。": "",
+        "id": "${_id}-lyric-scrim",
+        "when": "${artAsset ? 1 : (figureAsset ? 1 : 0)}",
+        "type": "shape",
+        "shape": {
+          "type": "ellipse",
+          "width": "${width * 1.05}",
+          "height": "${size * 4.2}",
+          "fill": "${background}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.5
+        },
+        "effects": [
+          {
+            "type": "feather",
+            "size": "${size * 1.4}"
+          }
+        ]
+      },
+      {
+        "// 歌詞。1 行だけ・大きく・中央・静止。跳ねさせない、流さない、色も変えない。": "",
+        "// 2 行以上渡されたら尺を等分するが、谷は 1 行が基本。": "",
+        "// 時刻つきの行（.lrc 由来）なら its 時刻を使う。": "",
+        "repeat": {
+          "over": "${lines}",
+          "as": "line",
+          "indexAs": "i"
+        },
+        "id": "${_id}-line-${i}",
+        "type": "text",
+        "text": "${lyricText(line)}",
+        "start": "${lyricAt(line, _duration / lineCount * i)}",
+        "end": "${lyricAt(line, _duration / lineCount * i) + lyricFor(line, _duration / lineCount)}",
+        "style": {
+          "size": "${size}",
+          "color": "${color}",
+          "align": "center",
+          "lineHeight": 1.3,
+          "letterSpacing": "${size * 0.06}",
+          "kinsoku": "strict",
+          "fit": {
+            "mode": "shrink",
+            "maxWidth": "80%",
+            "maxLines": 2,
+            "minSize": 0.6
+          },
+          "// 縁取りは文字サイズの 5%。谷なので «ぎりぎり効く» ところまで細くする。": "",
+          "stroke": {
+            "color": "${background}",
+            "width": "${size * 0.05}"
+          },
+          "shadow": {
+            "color": "rgba(0,0,0,0.42)",
+            "blur": "${size * 0.22}",
+            "offsetX": 0,
+            "offsetY": "${size * 0.04}"
+          }
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "use": [
+          {
+            "// 出入りは «2 拍»。秒で書くと BPM を変えたときに «ふっと» が «さっと» になる。": "",
+            "animation": "fade-in",
+            "with": {
+              "delay": "${lyricAt(line, _duration / lineCount * i)}",
+              "duration": "${min(60 / bpm * 2, _duration / lineCount * 0.3)}"
+            }
+          },
+          {
+            "animation": "fade-out",
+            "with": {
+              "at": "${lyricAt(line, _duration / lineCount * i) + lyricFor(line, _duration / lineCount) - min(60 / bpm * 2, _duration / lineCount * 0.32)}",
+              "duration": "${min(60 / bpm * 2, _duration / lineCount * 0.3)}"
+            }
+          }
+        ]
+      },
+      {
+        "// 全画面の加工は «前後のシーンと地続きに見える最低限» だけ。": "",
+        "// 谷だけ粒が消えると «素材が変わった» ように見えるので、グレインは残す。": "",
+        "// 周辺減光も、中央の 1 行へ目を寄せるという理由が言えるぶんだけ。それ以外は掛けない。": "",
+        "id": "${_id}-quiet",
+        "type": "frameBuffer",
+        "frameBuffer": {
+          "source": "below",
+          "clear": true
+        },
+        "transform": {
+          "x": 0,
+          "y": 0,
+          "anchorX": 0,
+          "anchorY": 0
+        },
+        "effects": [
+          {
+            "type": "vignette",
+            "amount": 0.22,
+            "radius": 0.78,
+            "softness": 0.6
+          },
+          {
+            "type": "noise",
+            "amount": 0.05,
+            "monochrome": true
+          }
+        ]
+      }
+    ]
+  }
+}

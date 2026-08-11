@@ -1,0 +1,47 @@
+{
+  "animation": {
+    "name": "fade-out",
+    "title": "フェードアウト",
+    "description": "指定時刻から不透明度を 0 へ。",
+    "category": "out",
+    "tags": [
+      "退場",
+      "opacity"
+    ]
+  },
+  "inputs": {
+    "at": {
+      "type": "number",
+      "default": 0,
+      "label": "開始時刻"
+    },
+    "duration": {
+      "type": "number",
+      "default": 0.6,
+      "min": 0.01
+    },
+    "easing": {
+      "type": "text",
+      "default": "easeInCubic",
+      "label": "イージング"
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.opacity",
+        "keyframes": [
+          {
+            "time": "${at}",
+            "value": 1
+          },
+          {
+            "time": "${at + duration}",
+            "value": 0,
+            "easing": "${easing}"
+          }
+        ]
+      }
+    ]
+  }
+}

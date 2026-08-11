@@ -1,0 +1,52 @@
+{
+  "animation": {
+    "name": "pulse",
+    "title": "拡大縮小の呼吸",
+    "description": "一定周期で少し大きくなったり小さくなったりする。",
+    "category": "loop",
+    "tags": [
+      "ループ",
+      "scale"
+    ]
+  },
+  "inputs": {
+    "frequency": {
+      "type": "number",
+      "default": 1,
+      "min": 0.01
+    },
+    "amount": {
+      "type": "number",
+      "default": 0.08,
+      "label": "振れ幅"
+    },
+    "phase": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.scaleX",
+        "relative": true,
+        "modulator": {
+          "type": "sine",
+          "frequency": "${frequency}",
+          "amplitude": "${amount}",
+          "phase": "${phase}"
+        }
+      },
+      {
+        "property": "transform.scaleY",
+        "relative": true,
+        "modulator": {
+          "type": "sine",
+          "frequency": "${frequency}",
+          "amplitude": "${amount}",
+          "phase": "${phase}"
+        }
+      }
+    ]
+  }
+}

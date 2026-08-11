@@ -1,0 +1,39 @@
+{
+  "animation": {
+    "name": "beat-flash",
+    "title": "拍で光る",
+    "description": "拍ごとに不透明度が跳ね上がる。点滅させたい装飾に。",
+    "category": "accent",
+    "tags": [
+      "BPM",
+      "opacity"
+    ]
+  },
+  "inputs": {
+    "dim": {
+      "type": "number",
+      "default": 0.35,
+      "min": 0,
+      "max": 1,
+      "label": "拍間の明るさ"
+    },
+    "division": {
+      "type": "number",
+      "default": 1,
+      "min": 0.03125
+    },
+    "decay": {
+      "type": "number",
+      "default": 8,
+      "min": 0
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.opacity",
+        "expression": "min(1, ${dim} + beat(${division}, ${decay}) * (1 - ${dim}))"
+      }
+    ]
+  }
+}

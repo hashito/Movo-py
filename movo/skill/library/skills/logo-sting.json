@@ -1,0 +1,228 @@
+{
+  "skill": {
+    "name": "logo-sting",
+    "title": "ロゴスティング",
+    "description": "ロゴが回りながら現れて光る、短い締めのカット。出たあとも発光が脈打つ。",
+    "category": "title",
+    "tags": [
+      "ロゴ",
+      "発光"
+    ],
+    "learnedFrom": [
+      "https://aviutl-douga.com/glow/",
+      "https://www.kotsuxkotsu.work/ae-technique-illustmv-lyricvideo/"
+    ]
+  },
+  "inputs": {
+    "asset": {
+      "type": "asset",
+      "default": "",
+      "label": "ロゴ素材（宣言済みの名前）"
+    },
+    "text": {
+      "type": "text",
+      "default": "MOVO",
+      "label": "文字（素材が無いとき）"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "default": 320,
+      "min": 8
+    },
+    "color": {
+      "type": "color",
+      "default": "#ffffff"
+    },
+    "glowColor": {
+      "type": "color",
+      "default": "#4cc9f0"
+    },
+    "duration": {
+      "type": "number",
+      "default": 2.5,
+      "min": 0.2
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#07080f"
+  },
+  "layers": [
+    {
+      "id": "${_id}-glow",
+      "type": "shape",
+      "shape": {
+        "type": "circle",
+        "radius": "${size * 0.75}",
+        "fill": "${glowColor}"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "anchorX": 0.5,
+        "anchorY": 0.5,
+        "opacity": 0.35
+      },
+      "effects": [
+        {
+          "type": "blur",
+          "radius": "${60 * scale}"
+        }
+      ],
+      "animations": [
+        {
+          "property": "transform.scaleX",
+          "keyframes": [
+            {
+              "time": 0,
+              "value": 0.2
+            },
+            {
+              "time": "${duration * 0.5}",
+              "value": 1.1,
+              "easing": "easeOutCubic"
+            }
+          ]
+        },
+        {
+          "property": "transform.scaleY",
+          "keyframes": [
+            {
+              "time": 0,
+              "value": 0.2
+            },
+            {
+              "time": "${duration * 0.5}",
+              "value": 1.1,
+              "easing": "easeOutCubic"
+            }
+          ]
+        }
+      ],
+      "use": [
+        {
+          "animation": "pulse",
+          "with": {
+            "frequency": 0.55,
+            "amount": 0.06
+          }
+        },
+        {
+          "animation": "breathe",
+          "with": {
+            "frequency": 0.55,
+            "scaleAmount": 0.02,
+            "opacityAmount": 0.18
+          }
+        }
+      ]
+    },
+    {
+      "when": "${asset}",
+      "id": "${_id}-logo",
+      "type": "image",
+      "asset": "${asset}",
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "width": "${size}",
+        "height": "${size}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "animations": [
+        {
+          "property": "transform.rotation",
+          "keyframes": [
+            {
+              "time": 0,
+              "value": -180
+            },
+            {
+              "time": "${duration * 0.6}",
+              "value": 0,
+              "easing": "easeOutBack"
+            }
+          ]
+        }
+      ],
+      "use": [
+        {
+          "animation": "pop-in",
+          "with": {
+            "duration": "${duration * 0.6}",
+            "from": 0.3
+          }
+        },
+        {
+          "animation": "float",
+          "with": {
+            "amplitude": 8,
+            "frequency": 0.4
+          }
+        }
+      ],
+      "effects": [
+        {
+          "type": "rimLight",
+          "angle": -40,
+          "width": "${max(1, 6 * scale)}",
+          "color": "#fff4d0",
+          "intensity": 1.1
+        },
+        {
+          "type": "bloom",
+          "threshold": 0.55,
+          "radius": "${20 * scale}",
+          "intensity": 0.7
+        }
+      ]
+    },
+    {
+      "when": "${!asset}",
+      "id": "${_id}-word",
+      "type": "text",
+      "text": "${text}",
+      "style": {
+        "size": "${size * 0.55}",
+        "color": "${color}",
+        "align": "center",
+        "letterSpacing": "${size * 0.03}"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "pop-in-chars",
+          "with": {
+            "stagger": 0.07,
+            "duration": 0.6,
+            "rise": 0
+          }
+        },
+        {
+          "animation": "float",
+          "with": {
+            "amplitude": 6,
+            "frequency": 0.4
+          }
+        }
+      ],
+      "effects": [
+        {
+          "type": "bloom",
+          "threshold": 0.5,
+          "radius": "${22 * scale}",
+          "intensity": 0.8
+        }
+      ]
+    }
+  ]
+}

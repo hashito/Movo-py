@@ -1,0 +1,91 @@
+{
+  "skill": {
+    "name": "weather",
+    "title": "天候（雨・雪・桜）",
+    "description": "舞い物と色味を一括で載せる背景演出。",
+    "category": "background",
+    "tags": [
+      "パーティクル",
+      "背景"
+    ],
+    "learnedFrom": [
+      "https://www.kotsuxkotsu.work/ae-technique-illustmv-lyricvideo/",
+      "https://watashinokyoukasyo.com/all-diffusion-aviutl/"
+    ]
+  },
+  "inputs": {
+    "kind": {
+      "type": "choice",
+      "options": [
+        "rain",
+        "snow",
+        "sakura",
+        "confetti",
+        "bubble"
+      ],
+      "default": "snow",
+      "label": "種類"
+    },
+    "rate": {
+      "type": "number",
+      "default": 0,
+      "label": "個数（0 で既定）"
+    },
+    "tint": {
+      "type": "color",
+      "default": "#8fb8ff",
+      "label": "色味（空で無し）"
+    },
+    "tintAmount": {
+      "type": "number",
+      "default": 0.16,
+      "min": 0,
+      "max": 1
+    },
+    "duration": {
+      "type": "number",
+      "default": 6,
+      "min": 0.2
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#0d1018"
+  },
+  "layers": [
+    {
+      "id": "${_id}-particles",
+      "type": "particle",
+      "transform": {
+        "x": "${centerX}",
+        "y": 0
+      },
+      "emitter": {
+        "preset": "${kind}",
+        "rate": "${rate > 0 ? rate : (kind == 'rain' ? 260 : kind == 'snow' ? 90 : 55)}",
+        "width": "${width}"
+      }
+    },
+    {
+      "when": "${tint}",
+      "id": "${_id}-grade",
+      "type": "shape",
+      "shape": {
+        "type": "rectangle",
+        "width": "${width}",
+        "height": "${height}",
+        "fill": "${tint}"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "anchorX": 0.5,
+        "anchorY": 0.5,
+        "opacity": "${tintAmount}"
+      },
+      "blend": "overlay"
+    }
+  ]
+}

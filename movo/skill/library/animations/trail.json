@@ -1,0 +1,79 @@
+{
+  "animation": {
+    "name": "trail",
+    "title": "実フレームの残像",
+    "description": "実際に描いた過去フレームを重ねて軌跡を残す。変形・物理の結果まで写る。",
+    "category": "accent",
+    "tags": [
+      "残像",
+      "軌跡"
+    ],
+    "learnedFrom": [
+      "https://aviutl-douga.com/glow/"
+    ]
+  },
+  "inputs": {
+    "count": {
+      "type": "number",
+      "default": 7,
+      "min": 1,
+      "max": 32,
+      "label": "段数（count × delayFrames + 1 が render.frameHistory を超えると古い段は出ません）"
+    },
+    "delayFrames": {
+      "type": "number",
+      "default": 2,
+      "min": 1,
+      "max": 60,
+      "label": "何フレームおきか"
+    },
+    "decay": {
+      "type": "number",
+      "default": 0.72,
+      "min": 0,
+      "max": 1,
+      "label": "1 段ごとの薄まり"
+    },
+    "blend": {
+      "type": "choice",
+      "options": [
+        "normal",
+        "screen",
+        "add",
+        "multiply"
+      ],
+      "default": "screen"
+    },
+    "tint": {
+      "type": "color",
+      "default": "",
+      "label": "残像の色（空で元の色）"
+    },
+    "tintAmount": {
+      "type": "number",
+      "default": 0.5,
+      "min": 0,
+      "max": 1
+    },
+    "stepScale": {
+      "type": "number",
+      "default": 1,
+      "min": 0.5,
+      "max": 1.5,
+      "label": "1 段ごとの拡大率（1 で等倍）"
+    }
+  },
+  "produces": {
+    "layer": {
+      "frameEcho": {
+        "count": "${count}",
+        "delayFrames": "${delayFrames}",
+        "decay": "${decay}",
+        "blend": "${blend}",
+        "tint": "${tint}",
+        "tintAmount": "${tintAmount}",
+        "scale": "${stepScale}"
+      }
+    }
+  }
+}

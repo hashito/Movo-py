@@ -1,0 +1,48 @@
+{
+  "animation": {
+    "name": "handheld",
+    "title": "手ブレ",
+    "description": "wiggle で微妙に揺らす。常時振動と違って不規則なので自然。",
+    "category": "camera",
+    "tags": [
+      "カメラ",
+      "wiggle"
+    ]
+  },
+  "inputs": {
+    "frequency": {
+      "type": "number",
+      "default": 1,
+      "min": 0.01
+    },
+    "amount": {
+      "type": "number",
+      "unit": "px",
+      "default": 6
+    },
+    "rotate": {
+      "type": "number",
+      "default": 0.6
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.x",
+        "relative": true,
+        "expression": "wiggle(${frequency}, ${amount})"
+      },
+      {
+        "property": "transform.y",
+        "relative": true,
+        "expression": "wiggle(${frequency}, ${amount}, 1)"
+      },
+      {
+        "when": "${rotate != 0}",
+        "property": "transform.rotation",
+        "relative": true,
+        "expression": "wiggle(${frequency}, ${rotate}, 2)"
+      }
+    ]
+  }
+}

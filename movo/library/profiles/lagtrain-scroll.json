@@ -1,0 +1,39 @@
+{
+  "name": "lagtrain-scroll",
+  "label": "横スクロール長回し",
+  "note": "切らずに横へ流す。彩度を落とし、線と文字で持たせる。長回しはこの様式では正解。",
+  "target": {
+    "cutSeconds": [
+      6,
+      30
+    ],
+    "cutsPerMinute": [
+      2,
+      10
+    ],
+    "motion": [
+      0.003,
+      0.02
+    ],
+    "stillRatio": [
+      0,
+      0.8
+    ],
+    "colors": [
+      8,
+      64
+    ],
+    "saturation": [
+      0.05,
+      0.3
+    ],
+    "contrast": [
+      0.1,
+      0.35
+    ],
+    "detail": [
+      0.012,
+      0.045
+    ]
+  }
+}

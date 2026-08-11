@@ -1,0 +1,109 @@
+{
+  "animation": {
+    "name": "ken-burns",
+    "title": "ケン・バーンズ",
+    "description": "静止画をゆっくり寄せながら流す。写真素材に必ず効く定番。",
+    "category": "camera",
+    "tags": [
+      "カメラ",
+      "scale",
+      "移動"
+    ]
+  },
+  "inputs": {
+    "duration": {
+      "type": "number",
+      "default": 6,
+      "min": 0.1
+    },
+    "fromScale": {
+      "type": "number",
+      "default": 1
+    },
+    "toScale": {
+      "type": "number",
+      "default": 1.15
+    },
+    "panX": {
+      "type": "number",
+      "unit": "px",
+      "default": -40
+    },
+    "panY": {
+      "type": "number",
+      "unit": "px",
+      "default": -20
+    },
+    "delay": {
+      "type": "number",
+      "default": 0
+    },
+    "easing": {
+      "type": "text",
+      "default": "easeInOutSine",
+      "label": "イージング"
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.scaleX",
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": "${fromScale}"
+          },
+          {
+            "time": "${delay + duration}",
+            "value": "${toScale}",
+            "easing": "${easing}"
+          }
+        ]
+      },
+      {
+        "property": "transform.scaleY",
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": "${fromScale}"
+          },
+          {
+            "time": "${delay + duration}",
+            "value": "${toScale}",
+            "easing": "${easing}"
+          }
+        ]
+      },
+      {
+        "property": "transform.x",
+        "relative": true,
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": 0
+          },
+          {
+            "time": "${delay + duration}",
+            "value": "${panX}",
+            "easing": "${easing}"
+          }
+        ]
+      },
+      {
+        "property": "transform.y",
+        "relative": true,
+        "keyframes": [
+          {
+            "time": "${delay}",
+            "value": 0
+          },
+          {
+            "time": "${delay + duration}",
+            "value": "${panY}",
+            "easing": "${easing}"
+          }
+        ]
+      }
+    ]
+  }
+}

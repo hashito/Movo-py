@@ -1,0 +1,193 @@
+{
+  "skill": {
+    "name": "mv-chorus",
+    "kind": "scene",
+    "title": "サビ（決め文句を拍で跳ねさせる）",
+    "description": "決め文句を大きく置いて拍で跳ねさせ、背景を拍で明滅させる。既定は 8 小節。",
+    "category": "lyric",
+    "tags": [
+      "MV",
+      "サビ",
+      "拍同期",
+      "シーン"
+    ]
+  },
+  "inputs": {
+    "hook": {
+      "type": "text",
+      "label": "決め文句",
+      "default": "ぐるぐる"
+    },
+    "sub": {
+      "type": "text",
+      "label": "その下の 1 行",
+      "default": ""
+    },
+    "bars": {
+      "type": "number",
+      "label": "尺（小節）",
+      "default": 8,
+      "min": 0.25,
+      "max": 64
+    },
+    "background": {
+      "type": "color",
+      "default": "#12060f"
+    },
+    "color": {
+      "type": "color",
+      "label": "文字色",
+      "default": "#fff4e6"
+    },
+    "accent": {
+      "type": "color",
+      "label": "差し色",
+      "default": "#ff4d6d"
+    },
+    "size": {
+      "type": "number",
+      "unit": "px",
+      "label": "決め文句の大きさ",
+      "default": 168,
+      "min": 8
+    },
+    "division": {
+      "type": "number",
+      "label": "何拍ごとに跳ねるか",
+      "default": 1,
+      "min": 0.25,
+      "max": 8
+    }
+  },
+  "video": {
+    "width": 1920,
+    "height": 1080
+  },
+  "responsiveTime": {
+    "// 決め文句の pop-in と、その下の 1 行がせり上がるところまでが «サビの勢い»。": "",
+    "// 6 小節ぶんの絵を 12 小節で使っても、ここだけは同じ速さで出したい。": "",
+    "in": 0.9,
+    "out": 0.3
+  },
+  "scene": {
+    "duration": "${bars}bar",
+    "background": "${background}",
+    "transition": {
+      "type": "fade",
+      "in": 0.15,
+      "out": 0.3
+    },
+    "layers": [
+      {
+        "id": "${_id}-glow",
+        "type": "shape",
+        "shape": {
+          "type": "circle",
+          "radius": "${max(width, height) * 0.8}",
+          "fill": "${accent}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5,
+          "opacity": 0.18
+        },
+        "blend": "screen",
+        "effects": [
+          {
+            "type": "blur",
+            "radius": "${max(8, height * 0.09)}"
+          }
+        ],
+        "use": [
+          {
+            "animation": "pulse",
+            "with": {
+              "frequency": "${bpm / 60 / (division * 2)}",
+              "amount": 0.06
+            }
+          }
+        ]
+      },
+      {
+        "id": "${_id}-hook",
+        "type": "text",
+        "text": "${hook}",
+        "// 決め文句は «1 拍で出る»。秒で書くと BPM を変えたときに拍からずれるので拍で書く。": "",
+        "timeProtect": {
+          "in": "1beat"
+        },
+        "style": {
+          "size": "${size}",
+          "color": "${color}",
+          "align": "center",
+          "weight": "bold",
+          "letterSpacing": "${size * 0.04}",
+          "// 決め文句は長いこともあります（`make-mv --lyrics` はその区間で": "",
+          "// 実際に歌われる行を入れるので、13〜15 文字が普通に来ます）。": "",
+          "fit": {
+            "mode": "shrink",
+            "maxWidth": "${width * 0.92}",
+            "minSize": 0.25
+          },
+          "stroke": {
+            "color": "${accent}",
+            "width": "${size * 0.05}"
+          }
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "use": [
+          {
+            "animation": "pop-in",
+            "with": {
+              "duration": 0.28,
+              "from": 0.6
+            }
+          },
+          {
+            "animation": "beat-bounce",
+            "with": {
+              "amount": 0.07,
+              "division": "${division}",
+              "decay": 14
+            }
+          }
+        ]
+      },
+      {
+        "when": "${sub}",
+        "id": "${_id}-sub",
+        "type": "text",
+        "text": "${sub}",
+        "style": {
+          "size": "${size * 0.26}",
+          "color": "${color}",
+          "align": "center",
+          "letterSpacing": "${size * 0.03}"
+        },
+        "transform": {
+          "x": "${centerX}",
+          "y": "${centerY + size * 0.72}",
+          "anchorX": 0.5,
+          "anchorY": 0.5
+        },
+        "use": [
+          {
+            "animation": "rise-in",
+            "with": {
+              "delay": 0.35,
+              "distance": 24,
+              "duration": 0.5
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

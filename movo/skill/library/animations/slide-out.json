@@ -1,0 +1,96 @@
+{
+  "animation": {
+    "name": "slide-out",
+    "title": "スライドアウト",
+    "description": "指定方向へ滑って消える。",
+    "category": "out",
+    "tags": [
+      "退場",
+      "移動"
+    ]
+  },
+  "inputs": {
+    "at": {
+      "type": "number",
+      "default": 0,
+      "label": "開始時刻"
+    },
+    "duration": {
+      "type": "number",
+      "default": 0.6,
+      "min": 0.01
+    },
+    "distance": {
+      "type": "number",
+      "unit": "px",
+      "default": 220
+    },
+    "direction": {
+      "type": "choice",
+      "options": [
+        "left",
+        "right",
+        "up",
+        "down"
+      ],
+      "default": "right"
+    },
+    "fade": {
+      "type": "boolean",
+      "default": true
+    },
+    "easing": {
+      "type": "text",
+      "default": "easeInCubic",
+      "label": "イージング"
+    }
+  },
+  "produces": {
+    "animations": [
+      {
+        "property": "transform.x",
+        "relative": true,
+        "keyframes": [
+          {
+            "time": "${at}",
+            "value": 0
+          },
+          {
+            "time": "${at + duration}",
+            "value": "${direction == 'left' ? -distance : direction == 'right' ? distance : 0}",
+            "easing": "${easing}"
+          }
+        ]
+      },
+      {
+        "property": "transform.y",
+        "relative": true,
+        "keyframes": [
+          {
+            "time": "${at}",
+            "value": 0
+          },
+          {
+            "time": "${at + duration}",
+            "value": "${direction == 'up' ? -distance : direction == 'down' ? distance : 0}",
+            "easing": "${easing}"
+          }
+        ]
+      },
+      {
+        "when": "${fade}",
+        "property": "transform.opacity",
+        "keyframes": [
+          {
+            "time": "${at + duration * 0.3}",
+            "value": 1
+          },
+          {
+            "time": "${at + duration}",
+            "value": 0
+          }
+        ]
+      }
+    ]
+  }
+}

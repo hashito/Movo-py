@@ -1,0 +1,214 @@
+{
+  "skill": {
+    "name": "title-card",
+    "title": "タイトルカード",
+    "description": "帯の上にタイトルとサブタイトルを出す、汎用の見出し。出たあともゆっくり呼吸する。",
+    "category": "title",
+    "tags": [
+      "タイトル",
+      "見出し"
+    ],
+    "learnedFrom": [
+      "https://note.com/ika_rage/n/n3a2ffc371034"
+    ]
+  },
+  "inputs": {
+    "title": {
+      "type": "text",
+      "default": "Movo",
+      "label": "タイトル",
+      "required": true
+    },
+    "subtitle": {
+      "type": "text",
+      "default": "JSON から動画をつくる",
+      "label": "サブタイトル"
+    },
+    "titleColor": {
+      "type": "color",
+      "default": "#ffffff"
+    },
+    "subtitleColor": {
+      "type": "color",
+      "default": "#9fb3ff"
+    },
+    "cardColor": {
+      "type": "color",
+      "default": "#1b2140"
+    },
+    "titleSize": {
+      "type": "number",
+      "unit": "px",
+      "default": 96,
+      "min": 8
+    },
+    "duration": {
+      "type": "number",
+      "default": 4,
+      "min": 0.2
+    },
+    "align": {
+      "type": "choice",
+      "options": [
+        "left",
+        "center"
+      ],
+      "default": "center"
+    }
+  },
+  "duration": "${duration}",
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "background": "#0f1220"
+  },
+  "layers": [
+    {
+      "id": "${_id}-card",
+      "type": "shape",
+      "shape": {
+        "type": "rectangle",
+        "width": "${width * 0.62}",
+        "height": "${titleSize * 3}",
+        "radius": "${24 * scale}",
+        "fill": "${cardColor}"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "animations": [
+        {
+          "property": "transform.scaleY",
+          "keyframes": [
+            {
+              "time": 0,
+              "value": 0.15
+            },
+            {
+              "time": "${min(0.7, _duration * 0.28)}",
+              "value": 1,
+              "easing": "easeOutBack"
+            }
+          ]
+        }
+      ],
+      "use": [
+        {
+          "animation": "breathe",
+          "with": {
+            "frequency": 0.22,
+            "scaleAmount": 0.01,
+            "opacityAmount": 0.03
+          }
+        }
+      ]
+    },
+    {
+      "id": "${_id}-title",
+      "type": "text",
+      "text": "${title}",
+      "style": {
+        "size": "${titleSize}",
+        "color": "${titleColor}",
+        "align": "${align}"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY - titleSize * 0.45}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "pop-in-chars",
+          "with": {
+            "delay": "${min(0.35, _duration * 0.16)}",
+            "stagger": 0.05
+          }
+        },
+        {
+          "animation": "float",
+          "with": {
+            "amplitude": 5,
+            "frequency": 0.24
+          }
+        }
+      ]
+    },
+    {
+      "when": "${subtitle}",
+      "id": "${_id}-subtitle",
+      "type": "text",
+      "text": "${subtitle}",
+      "style": {
+        "size": "${titleSize * 0.33}",
+        "color": "${subtitleColor}",
+        "align": "${align}"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY + titleSize * 0.6}",
+        "anchorX": 0.5,
+        "anchorY": 0.5
+      },
+      "use": [
+        {
+          "animation": "rise-in",
+          "with": {
+            "delay": "${min(0.9, _duration * 0.36)}",
+            "distance": 24,
+            "duration": "${min(0.7, _duration * 0.3)}"
+          }
+        },
+        {
+          "animation": "float",
+          "with": {
+            "amplitude": 3,
+            "frequency": 0.24,
+            "phase": 0.4
+          }
+        }
+      ]
+    },
+    {
+      "id": "${_id}-sheen",
+      "type": "shape",
+      "shape": {
+        "type": "rectangle",
+        "width": "${width * 0.62}",
+        "height": "${titleSize * 3}",
+        "radius": "${24 * scale}",
+        "fill": "#ffffff"
+      },
+      "transform": {
+        "x": "${centerX}",
+        "y": "${centerY}",
+        "anchorX": 0.5,
+        "anchorY": 0.5,
+        "opacity": 0.16
+      },
+      "blend": "screen",
+      "mask": {
+        "type": "diagonal",
+        "angle": -70,
+        "width": 0.16,
+        "center": {
+          "keyframes": [
+            {
+              "time": "${_duration * 0.25}",
+              "value": -0.2
+            },
+            {
+              "time": "${_duration * 0.85}",
+              "value": 1.2,
+              "easing": "easeInOutSine"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
