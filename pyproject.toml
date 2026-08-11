@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "movo"
-version = "1.0.0"
+version = "0.1.0"
 description = "JSON から動画を作る CLI（Python 版）"
 requires-python = ">=3.11"
 license = "MIT"
