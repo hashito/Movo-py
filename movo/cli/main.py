@@ -43,6 +43,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "plugins": (".commands.plugin", "plugin_command"),
     "config": (".commands.config", "config_command"),
     "doctor": (".commands.doctor", "doctor_command"),
+    "setup-ffmpeg": (".commands.setup_ffmpeg", "setup_ffmpeg_command"),
 }
 
 

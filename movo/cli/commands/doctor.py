@@ -23,6 +23,9 @@ from ..console import logger, say, style
 
 def doctor_command(positional: list[str], options: dict[str, Any]) -> dict[str, Any]:
     ffmpeg = bridge.find_ffmpeg(refresh=True)
+    # 無いときに «どうすればよいか» まで言う。「見つかりません」だけだと、
+    # mp4 が書き出せない理由が分かっても直し方が分からない。
+    ffmpeg_hint = None if ffmpeg else "movo setup-ffmpeg で取ってこられます（mp4 / webm / mov に必要）"
     ffprobe = bridge.find_ffprobe()
     config = list_config()
     python_ok = sys.version_info >= (3, 11)
@@ -63,7 +66,7 @@ def doctor_command(positional: list[str], options: dict[str, Any]) -> dict[str, 
             "name": "ffmpeg",
             "ok": bool(ffmpeg),
             "value": (ffmpeg or {}).get("path") or "見つかりません",
-            "hint": "MP4/WebM 出力、動画・音声素材、並列レンダリングの連結に必要です",
+            "hint": ffmpeg_hint or "MP4/WebM 出力、動画・音声素材、並列レンダリングの連結に必要です",
         },
         {"name": "ffprobe", "ok": bool(ffprobe), "value": "利用可能" if ffprobe else "見つかりません（任意）"},
         {

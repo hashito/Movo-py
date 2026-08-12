@@ -243,9 +243,24 @@ def find_ffprobe():
 
 
 def _which_tool(name: str):
+    """PATH と、**`movo setup-ffmpeg` が置いた場所** から探す。
+
+    置き場を見ないと、取ってきた直後なのに «見つかりません» と言われる
+    （PATH には入れないため）。PATH を先に見るのは、利用者が自分で入れた
+    ものがあればそちらを尊重するという判断である。
+    """
     import shutil
 
     path = shutil.which(name)
-    if not path:
-        return None
-    return {"path": path, "version": None}
+    if path:
+        return {"path": path, "version": None}
+
+    try:
+        from .config_store import movo_home
+
+        for candidate in (movo_home() / "bin" / name, movo_home() / "bin" / (name + ".exe")):
+            if candidate.exists():
+                return {"path": str(candidate), "version": None}
+    except Exception:
+        pass
+    return None
