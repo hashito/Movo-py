@@ -60,9 +60,12 @@ jobs:
           - os: macos-14 # Apple Silicon
             target: macos-arm64
             archive: tar
-          - os: macos-13 # Intel
-            target: macos-x64
-            archive: tar
+          # Intel Mac（macos-13）は外してある。**動かないのではなく、割り当たらない。**
+          # v0.1.0 の初回ビルドで 18 時間ランナーが付かず、他の3つが終わっても
+          # queued のままだった（GitHub が Intel ランナーを縮小している）。
+          # PyInstaller はクロスコンパイルできないので、arm64 の成果物は
+          # Intel Mac では動かない。Intel Mac の人はソースから入れてもらう。
+          # 復活させるなら macos-15-intel など現行のラベルで1度試すこと。
 
     runs-on: ${{ matrix.os }}
 

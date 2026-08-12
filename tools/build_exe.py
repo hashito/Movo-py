@@ -61,6 +61,30 @@ import tempfile
 import time
 from pathlib import Path
 
+def _force_utf8_output() -> None:
+    """端末が cp1252 / cp932 でも日本語を出せるようにする。
+
+    このスクリプトの表示はすべて日本語なので、英語ロケールの Windows
+    （標準出力が cp1252）では **PyInstaller の実行そのものは成功したのに、
+    進捗を print した瞬間に UnicodeEncodeError で落ちます**。
+    実際 GitHub Actions の windows-latest で v0.1.0 のビルドがこれで落ちました
+    （テストは 1247 件すべて通っていて、固めたあとの1行で落ちた）。
+    手元の日本語 Windows は cp932 なので気づけません。
+
+    `movo/cli/main.py` の `_force_utf8_output` と同じ手当てです。あちらは
+    CLI 本体、こちらはビルド道具で、入口が別なので両方に要ります。
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):
+                pass
+
+
+_force_utf8_output()
+
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 BUILD = ROOT / "build"
