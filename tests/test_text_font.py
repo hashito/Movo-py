@@ -12,15 +12,18 @@
 from __future__ import annotations
 
 import os
+import struct
 
 import numpy as np
 import pytest
 
+from movo.renderer import font as font_module
 from movo.renderer.font import (
     FONT_EXTENSIONS,
     Font,
     FontManager,
     Glyph,
+    covers_cjk,
     is_cjk,
     list_font_files,
     to_sfnt,
@@ -401,3 +404,239 @@ def test_describe(manager: FontManager) -> None:
     assert info["font_file_count"] >= 1
     assert info["font_file_count"] == info["fontFileCount"]
     assert isinstance(info["fallbacks"], list)
+
+
+# --------------------------------------------------------------------------
+# 太さの見分けと、CJK の面選び
+#
+# ここだけは **実機のフォントに頼りません**。「太字の CJK 面が無いマシン」を
+# 実機で用意できない（あるいは逆に、あるマシンでは再現しない）ので、面の並びを
+# 作り物で固定します。実機で起きた不具合は
+# 「weight:"bold" のとき日本語が豆腐になる」でした。
+# --------------------------------------------------------------------------
+
+
+def _os2_font(weight: int | None, subfamily: str = "Regular", file_path: str = "Stub.ttf") -> Font:
+    """OS/2 の usWeightClass だけを持つ、解析済みのふりをした Font。"""
+    font = Font.__new__(Font)
+    font.tables = {}
+    font.buffer = b""
+    font.file_path = file_path
+    font.subfamily_name = subfamily
+    if weight is not None:
+        buffer = bytearray(64)
+        struct.pack_into(">H", buffer, 4, weight)
+        # fsSelection の BOLD ビット（32）も立てて «ビットだけ太字» を再現します。
+        struct.pack_into(">H", buffer, 62, 32)
+        font.buffer = bytes(buffer)
+        font.tables = {"OS/2": (0, len(buffer))}
+    return font
+
+
+def test_weight_class_defaults_to_regular_without_os2() -> None:
+    assert _os2_font(None).weight_class == 400
+
+
+def test_weight_class_reads_os2() -> None:
+    assert _os2_font(700).weight_class == 700
+
+
+def test_is_bold_face_from_weight_class() -> None:
+    assert _os2_font(700).is_bold_face is True
+    assert _os2_font(400).is_bold_face is False
+
+
+def test_is_bold_face_ignores_fs_selection_bold_bit() -> None:
+    """usWeightClass が 400 のままの «Medium» を太字と数えないこと。
+
+    Apple の STHeiti Medium がこれで、太字として選ぶと «太くならない上に
+    書体まで中国語のものに変わる» という一番分かりにくい結果になります。
+    """
+    assert _os2_font(400, subfamily="Medium", file_path="STHeiti Medium.ttc").is_bold_face is False
+
+
+def test_is_bold_face_from_japanese_weight_number() -> None:
+    """OS/2 が無くても «W6» 以上のファイル名は太字と見なすこと。"""
+    assert _os2_font(None, file_path="/x/ヒラギノ角ゴシック W6.ttc").is_bold_face is True
+    assert _os2_font(None, file_path="/x/ヒラギノ角ゴシック W3.ttc").is_bold_face is False
+
+
+class _FakeFace:
+    """面の «並び» だけを試すための最小のフォント。"""
+
+    def __init__(
+        self,
+        name: str,
+        *,
+        bold: bool = False,
+        cjk: bool = True,
+        latin: bool = True,
+        family: str | None = None,
+    ) -> None:
+        self.full_name = name
+        self.family_name = family if family is not None else name
+        self.subfamily_name = "Bold" if bold else "Regular"
+        self.weight_class = 700 if bold else 400
+        self.is_bold_face = bold
+        self.file_path = f"/fake/{name}.ttf"
+        self._cjk = cjk
+        self._latin = latin
+
+    def glyph_index_for(self, code_point: int) -> int:
+        covered = self._cjk if is_cjk(code_point) else self._latin
+        return 1 if covered else 0
+
+    def glyph(self, glyph_index: int, depth: int = 0) -> Glyph:
+        return Glyph([np.zeros((3, 3))] if glyph_index else [])
+
+    def has_glyph(self, code_point: int) -> bool:
+        return self.glyph_index_for(code_point) != 0
+
+
+def _fake_manager(monkeypatch, faces: dict[str, _FakeFace]) -> FontManager:
+    """指定した面«だけ»が入っているマシンを作る。"""
+    manager = FontManager()
+    monkeypatch.setattr(manager, "_font_files", lambda: list(faces))
+    monkeypatch.setattr(manager, "_load_file", lambda file, face_index=0: faces.get(file))
+    # 汎用のフォールバック鎖は «CJK が 1 つも入らないことがある» のが今回の不具合の
+    # 半分なので、空にして «CJK の面選び» だけを見ます。
+    monkeypatch.setattr(manager, "fallback_chain", lambda: [])
+    return manager
+
+
+@pytest.fixture()
+def warnings(monkeypatch) -> list[str]:
+    """``_log_warn`` に渡された文字列を集める。"""
+    collected: list[str] = []
+    monkeypatch.setattr(font_module, "_log_warn", collected.append)
+    return collected
+
+
+_JP = ord("決")
+
+
+def test_covers_cjk_needs_kanji_and_kana() -> None:
+    assert covers_cjk(_FakeFace("Full")) is True
+    assert covers_cjk(_FakeFace("LatinOnly", cjk=False)) is False
+
+
+def test_covers_cjk_rejects_empty_outlines() -> None:
+    """cmap には載っているが輪郭が空の面は «描ける» と数えないこと。"""
+
+    class _Hollow(_FakeFace):
+        def glyph(self, glyph_index: int, depth: int = 0) -> Glyph:
+            return Glyph([])
+
+    assert covers_cjk(_Hollow("Hollow")) is False
+
+
+def test_cjk_faces_keeps_candidates_when_the_first_file_cannot_be_read(monkeypatch) -> None:
+    """名前が当たった 1 本目が開けなくても、次の候補を捨てないこと。
+
+    macOS の «Hiragino Sans GB.ttc» は CFF なので読めません。そこで打ち切って
+    いたために、CJK の候補が 1 つも残っていませんでした。
+    """
+    good = _FakeFace("NotoSansJP")
+    faces = {"/fake/NotoSansCJK-Broken.ttc": None, "/fake/NotoSansJP-Regular.ttf": good}
+    manager = FontManager()
+    monkeypatch.setattr(manager, "_font_files", lambda: list(faces))
+    monkeypatch.setattr(manager, "_load_file", lambda file, face_index=0: faces.get(file))
+    assert manager.cjk_faces() == [good]
+
+
+def test_cjk_face_prefers_the_bold_face(monkeypatch, warnings: list[str]) -> None:
+    regular = _FakeFace("NotoSansJP Regular")
+    bold = _FakeFace("NotoSansJP Bold", bold=True)
+    manager = _fake_manager(
+        monkeypatch,
+        {"/fake/NotoSansJP-Regular.ttf": regular, "/fake/NotoSansJP-Bold.ttf": bold},
+    )
+    assert manager.cjk_face(bold=True) is bold
+    assert warnings == []
+
+
+def test_cjk_face_drops_to_regular_weight_and_warns(monkeypatch, warnings: list[str]) -> None:
+    """太字の CJK 面が無い環境では、豆腐を出さずに通常ウェイトへ落ちること。"""
+    regular = _FakeFace("NotoSansJP Regular")
+    manager = _fake_manager(monkeypatch, {"/fake/NotoSansJP-Regular.ttf": regular})
+    assert manager.cjk_face(bold=True) is regular
+    assert len(warnings) == 1
+    assert "bold" in warnings[0].lower()
+    assert "NotoSansJP Regular" in warnings[0]
+    # 1 文字ごとに呼ばれるので、2 度目からは黙ること。
+    assert manager.cjk_face(bold=True) is regular
+    assert len(warnings) == 1
+
+
+def test_cjk_face_does_not_warn_without_bold(monkeypatch, warnings: list[str]) -> None:
+    regular = _FakeFace("NotoSansJP Regular")
+    manager = _fake_manager(monkeypatch, {"/fake/NotoSansJP-Regular.ttf": regular})
+    assert manager.cjk_face() is regular
+    assert warnings == []
+
+
+def test_cjk_face_finds_faces_whose_file_name_is_not_ascii(monkeypatch) -> None:
+    """ファイル名が日本語のフォントも拾えること。
+
+    macOS の «ヒラギノ角ゴシック W6.ttc» はどの英字名にも当たらないので、
+    ファイル名で見当がつかないときは総当たりで探します。
+    """
+    face = _FakeFace("Hiragino Sans W6", bold=True)
+    manager = _fake_manager(monkeypatch, {"/fake/ヒラギノ角ゴシック W6.ttc": face})
+    assert manager.cjk_faces() == []
+    assert manager.cjk_face(bold=True) is face
+
+
+def test_cjk_face_skips_private_system_faces(monkeypatch) -> None:
+    """先頭が . の面（Apple の «.Aqua かな» など）は本文に使わないこと。"""
+    private = _FakeFace(".Aqua Kana", family=".Aqua かな")
+    manager = _fake_manager(monkeypatch, {"/fake/AquaKana.ttc": private})
+    assert manager.cjk_face() is None
+
+
+def test_font_for_code_point_keeps_cjk_when_bold_is_requested(
+    monkeypatch, warnings: list[str]
+) -> None:
+    """weight:"bold" でも CJK が候補に残ること（この Issue の本体）。
+
+    太字のラテン面（Arial Bold のように日本語を持たない面）が主フォントでも、
+    日本語は CJK の面で描かれます。
+    """
+    latin_bold = _FakeFace("Arial Bold", bold=True, cjk=False)
+    cjk = _FakeFace("NotoSansJP Regular")
+    manager = _fake_manager(monkeypatch, {"/fake/NotoSansJP-Regular.ttf": cjk})
+    manager._remember_weight(latin_bold, True)
+    assert manager.font_for_code_point(latin_bold, _JP) is cjk
+    assert len(warnings) == 1
+
+
+def test_font_for_code_point_leaves_latin_alone(monkeypatch, warnings: list[str]) -> None:
+    """ラテン文字の道筋は変わっていないこと（他のスキルを壊さない）。"""
+    latin_bold = _FakeFace("Arial Bold", bold=True, cjk=False)
+    cjk = _FakeFace("NotoSansJP Regular")
+    manager = _fake_manager(monkeypatch, {"/fake/NotoSansJP-Regular.ttf": cjk})
+    manager._remember_weight(latin_bold, True)
+    assert manager.font_for_code_point(latin_bold, ord("A")) is latin_bold
+    assert warnings == []
+
+
+def test_font_for_code_point_prefers_bold_cjk_over_the_generic_chain(monkeypatch) -> None:
+    """鎖に通常ウェイトの CJK が居ても、太字の CJK 面があればそちらを使うこと。"""
+    latin_bold = _FakeFace("Arial Bold", bold=True, cjk=False)
+    regular = _FakeFace("NotoSansJP Regular")
+    bold = _FakeFace("NotoSansJP Bold", bold=True)
+    manager = FontManager()
+    faces = {"/fake/NotoSansJP-Regular.ttf": regular, "/fake/NotoSansJP-Bold.ttf": bold}
+    monkeypatch.setattr(manager, "_font_files", lambda: list(faces))
+    monkeypatch.setattr(manager, "_load_file", lambda file, face_index=0: faces.get(file))
+    monkeypatch.setattr(manager, "fallback_chain", lambda: [regular])
+    manager._remember_weight(latin_bold, True)
+    assert manager.font_for_code_point(latin_bold, _JP) is bold
+
+
+def test_resolve_records_the_requested_weight(manager: FontManager) -> None:
+    """resolve() で頼んだ太さが、欠字で落ちるときまで残っていること。"""
+    bold = manager.resolve(None, bold=True)
+    assert manager._requested_bold.get(bold) is True
+    regular = manager.resolve(None, bold=False)
+    assert manager._requested_bold.get(regular) is False

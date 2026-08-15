@@ -99,6 +99,11 @@ def _log_warn(message: str) -> None:
 #: 読み込めるフォントの拡張子。woff / woff2 は «その場で SFNT に戻して» から読みます。
 FONT_EXTENSIONS = re.compile(r"\.(ttf|otf|ttc|woff2?)$", re.I)
 
+#: OS/2 が無い（か嘘をついている）フォントで «太字の面» を見分けるための語。
+#: ``W6`` 以上を入れているのは、日本語フォントが太さを数字で書くためです
+#: （ヒラギノ角ゴシック W3 が細め、W6 以上が見出し用の太さ）。
+_BOLD_FACE_NAME = re.compile(r"bold|black|heavy|ultra|ボールド|太[字ゴ]|w[6-9](?![0-9])", re.I)
+
 
 # ==========================================================================
 # バイト列を読む道具
@@ -1131,6 +1136,48 @@ class Font:
         return result
 
     @property
+    def weight_class(self) -> int:
+        """OS/2 の ``usWeightClass``（100〜1000）。OS/2 が無ければ 400（Regular）。
+
+        «この面は太字か» をファイル名や subfamily の英単語だけで決めると、
+        日本語フォントのように «W6» や «中等» と書いてある面を取りこぼします。
+        数字で持っている OS/2 を先に見るのはそのためです。
+        """
+        cached = getattr(self, "_weight_class", None)
+        if cached is not None:
+            return cached
+        value = 400
+        table = self.tables.get("OS/2")
+        if table is not None and table[0] + 6 <= len(self.buffer):
+            raw = _u16(self.buffer, table[0] + 4)
+            if 1 <= raw <= 1000:
+                value = raw
+        self._weight_class = value
+        return value
+
+    @property
+    def is_bold_face(self) -> bool:
+        """本物の太字の面か。
+
+        **fsSelection の BOLD ビットは見ません。** Apple の «STHeiti Medium»
+        のように、usWeightClass が 400（＝太くない）のままビットだけ立っている
+        面があり、それを太字として選ぶと «太字を頼んだのに太くない上に書体まで
+        変わった» という一番分かりにくい結果になるためです。
+        """
+        cached = getattr(self, "_is_bold_face", None)
+        if cached is not None:
+            return cached
+        if self.weight_class >= 600:
+            value = True
+        else:
+            base = os.path.basename(self.file_path or "")
+            value = bool(_BOLD_FACE_NAME.search(self.subfamily_name or "")) or bool(
+                _BOLD_FACE_NAME.search(base)
+            )
+        self._is_bold_face = value
+        return value
+
+    @property
     def metrics(self) -> dict[str, int]:
         """行の高さを決めるための数値。"""
         return {
@@ -1186,6 +1233,49 @@ PREFERRED_CJK = [
     "wqy",
 ]
 
+#: PREFERRED_CJK で拾えなかったときに «CJK が描ける面» として次に当たる名前。
+#:
+#: PREFERRED_CJK 本体は JS 版と同じ並びのままにしてあります（同じ project を
+#: 描いたときに同じフォントが選ばれないと意味がないため）。こちらは «主フォントに
+#: その字が無い» ときだけ使う救済用なので、実機に本当に置かれている汎用の CJK 面を
+#: 足しています。macOS の «ヒラギノ角ゴシック W6.ttc» のようにファイル名が日本語の
+#: フォントはどの英字名にも当たらないので、それでも見つからなければ最後は
+#: ファイル名に頼らず総当たりで探します（``FontManager.cjk_faces``）。
+PREFERRED_CJK_WIDE = [
+    "yugoth",
+    "notoserifcjk",
+    "notoserifjp",
+    "sourcehanserif",
+    "pingfang",
+    "osaka",
+    "arialunicode",
+    "stheiti",
+    "stsong",
+    "songti",
+    "applegothic",
+    "applemyungjo",
+    "applesdgothicneo",
+    "malgun",
+    "batang",
+    "gulim",
+    "simsun",
+    "simhei",
+    "microsoftyahei",
+    "microsoftjhenghei",
+    "ipag",
+    "ipam",
+    "takao",
+    "kochi",
+    "vlgothic",
+    "sazanami",
+    "unifont",
+]
+
+#: «この面は CJK を描けるか» を確かめる文字。漢字とかなを両方見るのは、
+#: かなしか入っていない面（Apple の非公開フォント «.Aqua かな» など）を
+#: 掴んで «漢字だけ豆腐» にしないためです。
+_CJK_PROBE = (0x6C7A, 0x6F22, 0x3042, 0x30A2)  # 決 漢 あ ア
+
 #: CSS 由来の総称名。«どのフォントか» ではなく «既定でよい» の意味なので、
 #: フォールバック配列の末尾に書けるようにここで受け止めます。
 GENERIC_FAMILIES = frozenset(
@@ -1198,6 +1288,24 @@ _MISSING = object()
 def _normalise(text: str) -> str:
     """比較用に «英数字だけの小文字» にする。"""
     return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
+def covers_cjk(font: Font) -> bool:
+    """その面で日本語（漢字とかな）が実際に描けるか。
+
+    ``has_glyph`` だけだと «cmap には載っているが輪郭が空» の面を通してしまい、
+    結局まっさらな箱が並ぶので、輪郭が入っているところまで見ます。
+    """
+    for code in _CJK_PROBE:
+        index = font.glyph_index_for(code)
+        if index == 0:
+            return False
+        try:
+            if not font.glyph(index).contours:
+                return False
+        except Exception:
+            return False
+    return True
 
 
 class FontManager:
@@ -1215,6 +1323,8 @@ class FontManager:
         self._by_key: dict[str, Font | None] = {}
         self._files: list[str] | None = None
         self._fallback_chain: list[Font] | None = None
+        self._cjk_named: list[Font] | None = None
+        self._cjk_all: list[Font] | None = None
         self._warned: set[str] = set()
         # «明示フォールバック» の並び。style.family に配列を書いたときだけ入ります。
         # 先頭のフォントを鍵にしているのは、text.py が resolve() の戻り値しか
@@ -1223,6 +1333,11 @@ class FontManager:
         self._explicit_chains: "weakref.WeakKeyDictionary[Font, list[Font]]" = (
             weakref.WeakKeyDictionary()
         )
+        # «その面をどの太さのつもりで引いたか»。font_for_code_point() は主フォントしか
+        # 受け取らないので、欠字で別の面へ落ちるときに太さが分からなくなります。
+        # _explicit_chains と同じで、resolve() → font_for_code_point() が同じ組版の
+        # 中で続けて呼ばれることに乗っています。
+        self._requested_bold: "weakref.WeakKeyDictionary[Font, bool]" = weakref.WeakKeyDictionary()
 
     # ------------------------------------------------------------ 読み込み
 
@@ -1319,12 +1434,22 @@ class FontManager:
                 if font is not None and not any(font is existing for existing in chain):
                     chain.append(font)
             if not chain:
-                return self.default_font(bold, italic)
+                return self._remember_weight(self.default_font(bold, italic), bold)
             # 明示した並びで足りなかったときのために、既定の並びも後ろに足します。
             self._explicit_chains[chain[0]] = [*chain[1:], *self.fallback_chain()]
-            return chain[0]
+            return self._remember_weight(chain[0], bold)
         font = self._resolve_one(family, bold, italic, quiet=False)
-        return font if font is not None else self.default_font(bold, italic)
+        if font is None:
+            font = self.default_font(bold, italic)
+        return self._remember_weight(font, bold)
+
+    def _remember_weight(self, font: Font, bold: bool) -> Font:
+        """«この面は太字のつもりで引いた» を覚えておく（欠字で落ちるときに使う）。"""
+        try:
+            self._requested_bold[font] = bool(bold)
+        except TypeError:  # pragma: no cover - 弱参照を持てない差し替え相手のとき
+            pass
+        return font
 
     def _resolve_one(
         self, family: Any, bold: bool = False, italic: bool = False, quiet: bool = False
@@ -1463,17 +1588,121 @@ class FontManager:
         self._fallback_chain = chain
         return chain
 
+    def _collect_cjk_faces(self, deep: bool, exclude: Sequence[Font] = ()) -> list[Font]:
+        """CJK を描ける面を «良さそうな順» に集める。
+
+        :param deep: True ならファイル名の見当に頼らず、全ファイルを開いて
+            «その字が本当に描けるか» で判定する（macOS の «ヒラギノ角ゴシック
+            W6.ttc» のようにファイル名が日本語のフォントを拾うため）
+        :param exclude: すでに見つけてある面（二重に入れない）
+        """
+        files = self._font_files()
+        found: list[Font] = []
+        # 同じフォントが複数の場所に置かれていること（macOS の Arial Unicode は
+        # /System/... と /Library/... の両方にある）があるので、名前と太さで見ます。
+        seen = {(font.full_name, font.weight_class) for font in exclude}
+
+        def consider(file: str) -> None:
+            font = self._load_file(file)
+            if font is None:
+                return
+            key = (getattr(font, "full_name", file), getattr(font, "weight_class", 400))
+            if key in seen:
+                return
+            seen.add(key)
+            # «.Aqua かな» «.SF NS» のような、先頭が . の面は OS の内部用です。
+            # 本文に使うと意図しない字面になるので候補から外します。
+            if (getattr(font, "family_name", "") or "").startswith("."):
+                return
+            if covers_cjk(font):
+                found.append(font)
+
+        if deep:
+            for file in files:
+                consider(file)
+            return found
+
+        for preferred in [*PREFERRED_CJK, *PREFERRED_CJK_WIDE]:
+            for file in files:
+                base = _normalise(os.path.splitext(os.path.basename(file))[0])
+                # ここで break しないのは、名前が当たった 1 本目が CFF などで
+                # 開けなかったときに «その名前は無かったこと» にされるためです。
+                if base.startswith(preferred):
+                    consider(file)
+        return found
+
+    def cjk_faces(self, deep: bool = False) -> list[Font]:
+        """CJK（漢字・かな）を描ける面の並び。初回だけ探して覚えます。"""
+        if self._cjk_named is None:
+            self._cjk_named = self._collect_cjk_faces(deep=False)
+        if not deep:
+            return self._cjk_named
+        if self._cjk_all is None:
+            self._cjk_all = [
+                *self._cjk_named,
+                *self._collect_cjk_faces(deep=True, exclude=self._cjk_named),
+            ]
+        return self._cjk_all
+
+    def cjk_face(self, bold: bool = False) -> Font | None:
+        """CJK を描ける面を 1 つ選ぶ。太字を頼まれたら太字の面を先に探す。
+
+        **太字の CJK 面が 1 つも無い環境では、通常ウェイトの CJK 面へ落とします。**
+        豆腐（□）を出すより «太さは違うが読める» ほうがましだからです。ただし
+        黙って見た目を変えると次に困るので、警告を 1 行だけ出します。
+        """
+        faces = self.cjk_faces()
+        if not faces or (bold and not any(font.is_bold_face for font in faces)):
+            # 名前で見当がつかなかった／太字が見つからなかったときだけ総当たり。
+            # 警告を出す前に «本当に無いのか» を確かめるためでもあります。
+            faces = self.cjk_faces(deep=True)
+        if not faces:
+            return None
+        if not bold:
+            return faces[0]
+        for font in faces:
+            if font.is_bold_face:
+                return font
+        chosen = faces[0]
+        if "cjk-bold-missing" not in self._warned:
+            self._warned.add("cjk-bold-missing")
+            _log_warn(
+                "no bold CJK face was found on this system; CJK text is drawn with the "
+                f'regular weight of "{chosen.full_name}" instead of a bold face '
+                "(install a bold CJK font, or declare one in project.fonts, to get real bold)"
+            )
+        return chosen
+
     def font_for_code_point(self, primary: Font | None, code_point: int) -> Font | None:
         """``code_point`` を実際に描ける面を選ぶ。
 
         family をリストで書いた場合は «そこに並べた順» を先に見ます。書いた
         とおりの字形で出したいから並べているので、システムから拾った並びが
         割り込んではいけません。
+
+        CJK だけは、汎用のフォールバック鎖より先に «CJK の面» を探します。
+        鎖は ``PREFERRED_CJK`` のファイル名一致で作るので環境によっては CJK が
+        1 つも入らず、しかも太さを見ていないためです（weight:"bold" のときに
+        日本語が豆腐になっていたのがこれです）。
         """
         if primary is not None and primary.has_glyph(code_point):
             return primary
+        want_bold = bool(self._requested_bold.get(primary, False)) if primary is not None else False
         explicit = self._explicit_chains.get(primary) if primary is not None else None
-        for font in (explicit if explicit is not None else self.fallback_chain()):
+        if explicit is not None:
+            for font in explicit:
+                if font.has_glyph(code_point):
+                    return font
+            if is_cjk(code_point):
+                face = self.cjk_face(want_bold)
+                if face is not None and face.has_glyph(code_point):
+                    return face
+            return primary
+        if is_cjk(code_point):
+            face = self.cjk_face(want_bold)
+            if face is not None and face.has_glyph(code_point):
+                return face
+        for font in self.fallback_chain():
             if font.has_glyph(code_point):
                 return font
         return primary
@@ -1543,10 +1772,22 @@ class FontManager:
             default_name = self.default_font().full_name
         except Exception:
             default_name = None
+        # «日本語がどの面で出るか» と «太字を頼んだら本当に太字になるか» は、
+        # 豆腐や «太字にならない» の相談で最初に知りたいところなので出しておきます。
+        # cjk_face() を呼ばないのは、報告を出すだけで警告まで出すと «描いてもいないのに
+        # 怒られた» ことになるためです。
+        try:
+            faces = self.cjk_faces(deep=True)
+        except Exception:
+            faces = []
+        cjk_regular = faces[0] if faces else None
+        cjk_bold = next((font for font in faces if font.is_bold_face), None)
         return {
             "font_file_count": len(files),
             "default_font": default_name,
             "fallbacks": [f.full_name for f in self.fallback_chain()],
+            "cjk_font": cjk_regular.full_name if cjk_regular is not None else None,
+            "cjk_bold_font": cjk_bold.full_name if cjk_bold is not None else None,
             # JS 版の JSON 出力と突き合わせられるよう、camelCase の別名も残します。
             "fontFileCount": len(files),
             "defaultFont": default_name,
@@ -1558,12 +1799,14 @@ __all__ = [
     "CJK_RANGES",
     "GENERIC_FAMILIES",
     "PREFERRED_CJK",
+    "PREFERRED_CJK_WIDE",
     "PREFERRED_LATIN",
     "WOFF2_KNOWN_TAGS",
     "Font",
     "FontManager",
     "Glyph",
     "Reader",
+    "covers_cjk",
     "is_cjk",
     "list_font_files",
     "to_sfnt",

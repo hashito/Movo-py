@@ -75,6 +75,14 @@ def doctor_command(positional: list[str], options: dict[str, Any]) -> dict[str, 
             "value": fonts.get("error") or f'{fonts.get("fontFileCount", 0)} 個 / 既定 {fonts.get("defaultFont") or "不明"}',
             "hint": "テキストレイヤーには TrueType フォントが必要です。project.fonts で明示できます。",
         },
+        # 日本語を別行にするのは、«ラテン文字は出るのに日本語だけ豆腐» と
+        # «太字を頼んだのに太くならない» が、どちらもここを見れば分かるためです。
+        {
+            "name": "日本語フォント",
+            "ok": bool(fonts.get("cjk_font")),
+            "value": _cjk_font_value(fonts),
+            "hint": "日本語を描ける TrueType フォント（CFF ではないもの）が要ります。project.fonts で明示できます。",
+        },
         {
             "name": "API キー",
             "ok": True,
@@ -192,6 +200,19 @@ def _describe_fonts() -> dict[str, Any]:
         return manager(project_root=os.getcwd()).describe()
     except Exception as error:  # noqa: BLE001
         return {"error": str(error), "fontFileCount": 0}
+
+
+def _cjk_font_value(fonts: dict[str, Any]) -> str:
+    """日本語の行に出す 1 文。«太字が無い» までここで言い切ります。"""
+    if fonts.get("error"):
+        return str(fonts["error"])
+    regular = fonts.get("cjk_font")
+    if not regular:
+        return "見つかりません（日本語が豆腐 □ になります）"
+    bold = fonts.get("cjk_bold_font")
+    if bold:
+        return f"{regular} / 太字 {bold}"
+    return f'{regular} / 太字の面なし（weight:"bold" は通常ウェイトで描かれます）'
 
 
 def _directory_size(directory: Path) -> int:
